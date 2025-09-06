@@ -1,8 +1,8 @@
 {
-  "test_time": "2025-09-06T12:59:22.543049",
-  "total_tests": 42,
-  "passed": 42,
-  "failed": 0,
+  "test_time": "2025-09-06T13:15:40.313591",
+  "total_tests": 41,
+  "passed": 40,
+  "failed": 1,
   "skipped": 0,
   "tests": [
     {
@@ -175,14 +175,8 @@
     },
     {
       "name": "FastAPI: App Creation",
-      "status": "PASS",
-      "message": "App created: FastAPI Cloud Template v1.0.0",
-      "details": null
-    },
-    {
-      "name": "FastAPI: Essential Routes",
-      "status": "PASS",
-      "message": "All routes found: ['/', '/health/']",
+      "status": "FAIL",
+      "message": "Import/creation failed: No module named 'structlog'",
       "details": null
     },
     {
@@ -218,7 +212,7 @@
     {
       "name": "Config: README.md",
       "status": "PASS",
-      "message": "Exists (1834 bytes)",
+      "message": "Exists (12153 bytes)",
       "details": null
     },
     {
@@ -242,7 +236,7 @@
     {
       "name": "Docs: README Content",
       "status": "PASS",
-      "message": "230 words",
+      "message": "1505 words",
       "details": null
     },
     {
