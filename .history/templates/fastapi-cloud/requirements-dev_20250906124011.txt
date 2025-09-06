@@ -24,7 +24,6 @@ email-validator>=2.1.0
 # Configuration
 python-dotenv>=1.0.0
 dynaconf>=3.2.4
-itsdangerous>=2.2.0
 
 # HTTP Client
 httpx>=0.25.2
