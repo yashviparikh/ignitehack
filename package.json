@@ -1,0 +1,16 @@
+{
+  "name": "copilot",
+  "version": "1.0.0",
+  "description": "A project for the hackathon with custom instructions and modular structure.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "node src/main.js",
+    "test": "jest"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "jest": "^27.0.0"
+  },
+  "author": "",
+  "license": "ISC"
+}

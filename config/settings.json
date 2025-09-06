@@ -1,0 +1,23 @@
+{
+  "environment": "development",
+  "port": 3000,
+  "database": {
+    "host": "localhost",
+    "port": 5432,
+    "username": "user",
+    "password": "password",
+    "name": "copilot_db"
+  },
+  "api": {
+    "base_url": "/api/v1",
+    "timeout": 5000
+  },
+  "logging": {
+    "level": "info",
+    "file": "logs/app.log"
+  },
+  "features": {
+    "enableFeatureX": true,
+    "enableFeatureY": false
+  }
+}
