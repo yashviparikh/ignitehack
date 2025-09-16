@@ -3,6 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self'; 
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' *.googleapis.com *.gstatic.com; 
+        style-src 'self' 'unsafe-inline' *.googleapis.com *.gstatic.com; 
+        img-src 'self' data: *.googleapis.com *.gstatic.com *.google.com; 
+        frame-src 'self' *.google.com *.googleapis.com;
+        connect-src 'self' *.googleapis.com *.gstatic.com;
+    ">
     <title>Food Rescue Matchmaker</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1002,6 +1010,86 @@
             }, 500);
         }
 
+        // Handle map loading errors (CSP blocks, ad blockers, etc.)
+        function handleMapError(mapElement) {
+            console.log('🗺️ Map loading failed, showing fallback');
+            const container = mapElement.parentElement;
+            const mapSrc = mapElement.src;
+            const coords = mapSrc.match(/q=([^&]+)/);
+            const coordsText = coords ? coords[1] : 'Unknown location';
+            
+            container.innerHTML = `
+                <div style="
+                    width: 100%; height: 200px; 
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    border: 2px dashed #3498db; border-radius: 10px;
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    text-align: center; padding: 20px; box-sizing: border-box;
+                ">
+                    <div style="font-size: 24px; margin-bottom: 10px;">🗺️</div>
+                    <div style="font-weight: bold; color: #2c3e50; margin-bottom: 5px;">Map Preview Unavailable</div>
+                    <div style="font-size: 12px; color: #7f8c8d; margin-bottom: 5px;">
+                        📍 ${coordsText}
+                    </div>
+                    <div style="font-size: 11px; color: #95a5a6; margin-bottom: 15px;">
+                        Maps blocked by security policy or ad blocker
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                        <a href="${mapSrc.replace('output=embed', 'output=classic')}" target="_blank" 
+                           style="
+                               background: #3498db; color: white; padding: 6px 12px; 
+                               border-radius: 6px; text-decoration: none; font-size: 11px;
+                               transition: background 0.3s ease;
+                           "
+                           onmouseover="this.style.background='#2980b9'"
+                           onmouseout="this.style.background='#3498db'">
+                            🗺️ Google Maps
+                        </a>
+                        <a href="https://www.openstreetmap.org/?mlat=${coordsText.split(',')[0]}&mlon=${coordsText.split(',')[1]}&zoom=15" target="_blank" 
+                           style="
+                               background: #27ae60; color: white; padding: 6px 12px; 
+                               border-radius: 6px; text-decoration: none; font-size: 11px;
+                               transition: background 0.3s ease;
+                           "
+                           onmouseover="this.style.background='#229954'"
+                           onmouseout="this.style.background='#27ae60'">
+                            🌍 OpenStreetMap
+                        </a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Global error handler to catch unhandled map errors
+        window.addEventListener('error', function(e) {
+            if (e.target && e.target.tagName === 'IFRAME' && e.target.src.includes('maps.google.com')) {
+                handleMapError(e.target);
+            }
+        });
+
+        // Suppress repetitive Google Maps CSP errors and geolocation HTTPS errors in console
+        const originalConsoleError = console.error;
+        console.error = function(...args) {
+            const errorMessage = args.join(' ');
+            // Filter out Google Maps CSP and gen_204 errors
+            if (errorMessage.includes('maps.googleapis.com') && 
+                (errorMessage.includes('ERR_BLOCKED_BY_CLIENT') || 
+                 errorMessage.includes('gen_204') ||
+                 errorMessage.includes('csp_test'))) {
+                // Silent suppress - these are expected when ad blockers are active
+                return;
+            }
+            // Filter out geolocation HTTPS security errors (already handled in UI)
+            if (errorMessage.includes('Only secure origins are allowed') ||
+                errorMessage.includes('permanently-removed.invalid') ||
+                (errorMessage.includes('GeolocationPositionError') && errorMessage.includes('code: 1'))) {
+                // Silent suppress - these are handled gracefully in the UI
+                return;
+            }
+            // Allow other errors through
+            originalConsoleError.apply(console, args);
+        };
+
         // Tab switching functionality
         function switchTab(tab) {
             const loginForm = document.getElementById('login-form');
@@ -1268,6 +1356,11 @@
 
         // Geolocation
         function getLocation() {
+            console.log('🔍 getLocation() called');
+            console.log('🌐 Current protocol:', location.protocol);
+            console.log('🏠 Current hostname:', location.hostname);
+            console.log('🔌 navigator.geolocation available:', !!navigator.geolocation);
+            
             if (navigator.geolocation) {
                 document.getElementById('location-status').textContent = '📍 Getting high-accuracy location...';
                 navigator.geolocation.getCurrentPosition(
@@ -1323,7 +1416,9 @@
                                         height="200" 
                                         referrerpolicy="no-referrer-when-downgrade" 
                                         src="https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed"
-                                        allowfullscreen>
+                                        allowfullscreen
+                                        onload="console.log('Map loaded successfully')"
+                                        onerror="handleMapError(this)">
                                     </iframe>
                                 </div>
                                 
@@ -1351,10 +1446,23 @@
                         console.log('High-accuracy location captured:', currentLocation, 'Accuracy:', accuracy + 'm');
                     },
                     (error) => {
+                        console.log('🚨 Geolocation error details:');
+                        console.log('   - Error code:', error.code);
+                        console.log('   - Error message:', error.message);
+                        console.log('   - Error object:', error);
+                        
                         let errorMessage = 'Location failed';
+                        let isSecurityError = false;
+                        
                         switch(error.code) {
                             case error.PERMISSION_DENIED:
-                                errorMessage = 'Location permission denied. You can still post donations without GPS.';
+                                // Check if this is specifically the HTTPS security error
+                                if (error.message && error.message.includes('Only secure origins are allowed')) {
+                                    errorMessage = '🔒 Location requires HTTPS for security. Using manual location entry.';
+                                    isSecurityError = true;
+                                } else {
+                                    errorMessage = 'Location permission denied. You can still post donations without GPS.';
+                                }
                                 break;
                             case error.POSITION_UNAVAILABLE:
                                 errorMessage = 'Location unavailable. You can still post donations.';
@@ -1366,11 +1474,47 @@
                                 errorMessage = 'Location error. You can still post donations.';
                                 break;
                         }
-                        document.getElementById('location-status').textContent = '⚠️ ' + errorMessage;
-                        console.log('Geolocation error:', error);
                         
-                        // Provide manual location option
-                        showLocationFallback();
+                        // Show enhanced error message for security errors
+                        if (isSecurityError) {
+                            document.getElementById('location-status').innerHTML = `
+                                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffc107;">
+                                    <p style="margin: 0 0 10px 0; color: #856404;"><strong>🔒 Secure Location Required</strong></p>
+                                    <p style="margin: 5px 0; font-size: 0.9em; color: #666;">
+                                        Modern browsers require HTTPS for location access. Don't worry - you can still use all features!
+                                    </p>
+                                    <div style="margin-top: 10px;">
+                                        <button type="button" onclick="showLocationFallback()" 
+                                                style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 0.9em; cursor: pointer; margin-right: 8px;">
+                                            📍 Enter Address Manually
+                                        </button>
+                                        <button type="button" onclick="showSecurityInfo()" 
+                                                style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;">
+                                            ℹ️ Why HTTPS?
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            document.getElementById('location-status').textContent = '⚠️ ' + errorMessage;
+                        }
+                        
+                        // Filter console spam but log useful info
+                        if (!error.message || !error.message.includes('Only secure origins are allowed')) {
+                            console.log('Geolocation error:', error);
+                        }
+                        
+                        // Always provide manual location option, but with enhanced UI for security errors
+                        if (!isSecurityError) {
+                            showLocationFallback();
+                        }
+                        
+                        // Show helpful notification for security errors
+                        if (isSecurityError) {
+                            setTimeout(() => {
+                                showNotification('💡 Tip: Manual location entry works perfectly for donations!', 'info');
+                            }, 2000);
+                        }
                     },
                     {
                         enableHighAccuracy: true, // Enable high accuracy GPS
@@ -1515,6 +1659,52 @@
                     </div>
                 </div>
             `;
+        }
+
+        // Show security information for HTTPS requirement
+        function showSecurityInfo() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 1000; display: flex; 
+                align-items: center; justify-content: center; padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                    <h3 style="margin: 0 0 15px 0; color: #2c3e50;">🔒 Why HTTPS is Required</h3>
+                    
+                    <div style="margin: 15px 0; color: #666; line-height: 1.6;">
+                        <p><strong>🛡️ Security:</strong> Browsers require secure connections (HTTPS) for location access to protect your privacy.</p>
+                        
+                        <p><strong>📍 Location Alternative:</strong> Our manual address entry works perfectly and provides the same functionality!</p>
+                        
+                        <p><strong>🌟 Full Features:</strong> You can still post donations, match with NGOs, and use all features without GPS.</p>
+                        
+                        <p><strong>💡 Developer Tip:</strong> For automatic location, use HTTPS or localhost during development.</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove(); showLocationFallback();" 
+                                style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer; margin-right: 10px;">
+                            📍 Enter Address Manually
+                        </button>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove();" 
+                                style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; font-size: 1em; cursor: pointer;">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+            
+            document.body.appendChild(modal);
         }
 
         // Photo upload
