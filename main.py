@@ -29,6 +29,14 @@ app.add_middleware(
 os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
+# Serve the frontend
+app.mount("/static", StaticFiles(directory="food-rescue-frontend"), name="static")
+
+# Root route serves the main HTML file
+@app.get("/")
+def serve_frontend():
+    return FileResponse("food-rescue-frontend/index.html")
+
 # Database setup
 def init_db():
     conn = sqlite3.connect('food_rescue.db')
@@ -79,6 +87,13 @@ def init_db():
 @app.on_event("startup")
 def startup_event():
     init_db()
+    # Auto-open browser after a short delay
+    def open_browser():
+        time.sleep(1.5)  # Wait for server to start
+        webbrowser.open("http://127.0.0.1:8000")
+    
+    # Run in a separate thread so it doesn't block startup
+    threading.Thread(target=open_browser, daemon=True).start()
 
 # Pydantic models
 class DonationCreate(BaseModel):
@@ -99,11 +114,18 @@ class PickupCreate(BaseModel):
     ngo_id: int
 
 # API Endpoints
+
+# Root route serves the main HTML file
 @app.get("/")
-def read_root():
+def serve_frontend():
+    return FileResponse("food-rescue-frontend/index.html")
+
+# Health check - API endpoint
+@app.get("/api/health")
+def health_check():
     return {"message": "Food Rescue Matchmaker API is running!", "status": "success"}
 
-@app.post("/donations/")
+@app.post("/api/donations/")
 def create_donation(donation: DonationCreate):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
@@ -120,7 +142,7 @@ def create_donation(donation: DonationCreate):
     
     return {"id": donation_id, "message": "Donation created successfully"}
 
-@app.get("/donations/")
+@app.get("/api/donations/")
 def get_donations(status: Optional[str] = None):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
@@ -152,7 +174,7 @@ def update_donation_status(donation_id: int, status: str):
     
     return {"message": f"Donation status updated to {status}"}
 
-@app.post("/donations/{donation_id}/upload-photo")
+@app.post("/api/donations/{donation_id}/upload-photo")
 async def upload_photo(donation_id: int, file: UploadFile = File(...)):
     # Create unique filename
     file_extension = file.filename.split(".")[-1] if file.filename else "jpg"
@@ -179,7 +201,7 @@ async def upload_photo(donation_id: int, file: UploadFile = File(...)):
     
     return {"photo_url": photo_url}
 
-@app.post("/ngos/")
+@app.post("/api/ngos/")
 def create_ngo(ngo: NGOCreate):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
@@ -195,7 +217,7 @@ def create_ngo(ngo: NGOCreate):
     
     return {"id": ngo_id, "message": "NGO registered successfully"}
 
-@app.get("/ngos/")
+@app.get("/api/ngos/")
 def get_ngos():
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
@@ -207,7 +229,7 @@ def get_ngos():
     conn.close()
     return ngos
 
-@app.post("/pickups/")
+@app.post("/api/pickups/")
 def create_pickup(pickup: PickupCreate):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
@@ -274,7 +296,87 @@ def update_pickup(pickup_id: int, status: str, beneficiaries_count: Optional[int
     
     return {"message": f"Pickup updated to {status}"}
 
-@app.get("/stats/")
+@app.get("/api/donations/{donation_id}")
+def get_donation(donation_id: int):
+    conn = sqlite3.connect('food_rescue.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT d.*, 
+               n.name as ngo_name, n.contact_person, n.phone, n.email,
+               p.id as pickup_id, p.pickup_time, p.delivery_time, p.beneficiaries_count
+        FROM donations d 
+        LEFT JOIN pickups p ON d.id = p.donation_id 
+        LEFT JOIN ngos n ON p.ngo_id = n.id 
+        WHERE d.id = ?
+    ''', (donation_id,))
+    
+    result = cursor.fetchone()
+    conn.close()
+    
+    if not result:
+        raise HTTPException(status_code=404, detail="Donation not found")
+    
+    donation = {
+        "id": result[0],
+        "donor_name": result[1],
+        "donor_phone": result[2],
+        "food_type": result[3],
+        "quantity": result[4],
+        "expiry_hours": result[5],
+        "pickup_address": result[6],
+        "latitude": result[7],
+        "longitude": result[8],
+        "status": result[9],
+        "created_at": result[10],
+        "photo_path": result[11],
+        "ngo_name": result[12],
+        "contact_person": result[13],
+        "ngo_phone": result[14],
+        "ngo_email": result[15],
+        "pickup_id": result[16],
+        "pickup_time": result[17],
+        "delivery_time": result[18],
+        "beneficiaries_count": result[19]
+    }
+    
+    return donation
+
+@app.get("/api/pickups/")
+def get_pickups():
+    conn = sqlite3.connect('food_rescue.db')
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT p.*, d.donor_name, d.food_type, d.quantity, d.pickup_address, n.name as ngo_name
+        FROM pickups p
+        JOIN donations d ON p.donation_id = d.id
+        JOIN ngos n ON p.ngo_id = n.id
+        ORDER BY p.created_at DESC
+    ''')
+    
+    pickups = []
+    for row in cursor.fetchall():
+        pickup = {
+            "id": row[0],
+            "donation_id": row[1],
+            "ngo_id": row[2],
+            "pickup_time": row[3],
+            "delivery_time": row[4],
+            "created_at": row[5],
+            "beneficiaries_count": row[6],
+            "donor_name": row[7],
+            "food_type": row[8],
+            "quantity": row[9],
+            "pickup_address": row[10],
+            "ngo_name": row[11]
+        }
+        pickups.append(pickup)
+    
+    conn.close()
+    return pickups
+
+@app.get("/api/stats/")
 def get_statistics():
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
