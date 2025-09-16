@@ -194,9 +194,30 @@ document.addEventListener('DOMContentLoaded', function() {
 function handleAuthSubmit(event) {
     event.preventDefault();
     
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+    let email = document.getElementById('email').value;
+    let password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirm-password').value;
+    
+    // 🚀 TESTING SHORTCUT: Auto-fill credentials if "e" is entered as username
+    if (email.toLowerCase() === 'e') {
+        email = 'teste@gmail.com';
+        password = 'teste@123';
+        console.log('🧪 Testing shortcut activated for role:', selectedRole);
+        
+        // Update the form fields to show the auto-filled values
+        document.getElementById('email').value = email;
+        document.getElementById('password').value = password;
+        if (isRegistering) {
+            document.getElementById('confirm-password').value = password;
+        }
+        
+        // Show feedback to user
+        const submitBtn = document.getElementById('auth-submit-btn');
+        submitBtn.textContent = '🧪 Test Login Activated!';
+        setTimeout(() => {
+            submitBtn.textContent = 'Processing...';
+        }, 800);
+    }
     
     // Basic validation
     if (!email || !password) {
@@ -212,21 +233,33 @@ function handleAuthSubmit(event) {
     // Show loading state
     const submitBtn = document.getElementById('auth-submit-btn');
     const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Processing...';
+    if (submitBtn.textContent !== 'Processing...') {
+        submitBtn.textContent = 'Processing...';
+    }
     submitBtn.disabled = true;
     
     // Simulate API call
     setTimeout(() => {
         console.log('Auth successful for:', email, 'as', selectedRole);
         
-        // Store user data in localStorage for demonstration
+        // Store user data in localStorage for dashboard authentication
         const userData = {
             email: email,
+            name: email.split('@')[0], // Use email prefix as name for now
             role: selectedRole,
             isAuthenticated: true,
             loginTime: new Date().toISOString()
         };
+        
+        // Store in the format expected by dashboard-common.js
+        localStorage.setItem('currentUser', JSON.stringify(userData));
+        localStorage.setItem('selectedRole', selectedRole);
+        localStorage.setItem('userData', JSON.stringify(userData));
+        
+        // Also keep the old format for backward compatibility
         localStorage.setItem('foodRescueUser', JSON.stringify(userData));
+        
+        console.log('✅ User data stored in localStorage:', userData);
         
         // Redirect to appropriate dashboard
         redirectToDashboard();
@@ -237,7 +270,8 @@ function handleAuthSubmit(event) {
 // Redirect to appropriate dashboard based on role
 function redirectToDashboard() {
     if (!selectedRole) {
-        console.error('No role selected');
+        console.error('❌ No role selected');
+        alert('Please select a role first');
         return;
     }
     
@@ -248,6 +282,27 @@ function redirectToDashboard() {
     };
     
     const dashboardUrl = dashboardUrls[selectedRole];
+    
+    if (dashboardUrl) {
+        console.log(`🚀 Redirecting to ${selectedRole} dashboard:`, dashboardUrl);
+        
+        // Show success message
+        const submitBtn = document.getElementById('auth-submit-btn');
+        submitBtn.textContent = isRegistering ? 'Account Created! Redirecting...' : 'Login Successful! Redirecting...';
+        
+        // Redirect after a short delay for user feedback
+        setTimeout(() => {
+            window.location.href = dashboardUrl;
+        }, 1000);
+    } else {
+        console.error('❌ Invalid role selected:', selectedRole);
+        alert('Invalid role selected. Please try again.');
+        
+        // Reset form
+        const submitBtn = document.getElementById('auth-submit-btn');
+        submitBtn.textContent = isRegistering ? 'Create Account' : 'Sign In';
+        submitBtn.disabled = false;
+    }
     if (dashboardUrl) {
         console.log('Redirecting to:', dashboardUrl);
         window.location.href = dashboardUrl;

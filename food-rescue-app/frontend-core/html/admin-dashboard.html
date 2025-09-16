@@ -4,30 +4,318 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Food Rescue Matchmaker</title>
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Navigation -->
-        <nav class="dashboard-nav">
-            <div class="nav-brand">
-                <h1>⚙️ Admin Dashboard</h1>
+    <div class="dashboard-layout">
+        <!-- Dashboard Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="logo">
+                    <h1>⚙️ Food Rescue Admin</h1>
+                </div>
             </div>
-            <div class="nav-menu">
-                <a href="#dashboard" class="nav-link active">System Overview</a>
-                <a href="#donations" class="nav-link">Donations Management</a>
-                <a href="#users" class="nav-link">User Management</a>
-                <a href="#analytics" class="nav-link">Analytics</a>
-                <a href="#settings" class="nav-link">System Settings</a>
-                <a href="index.html" class="nav-link logout">Logout</a>
+            
+            <div class="header-center">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search users, donations, system..." id="dashboard-search">
+                    <button class="search-btn">🔍</button>
+                </div>
             </div>
-        </nav>
+            
+            <div class="header-right">
+                <div class="notifications">
+                    <button class="notification-btn" id="notification-btn">
+                        🔔
+                        <span class="notification-badge" id="notification-badge">5</span>
+                    </button>
+                    <div class="notification-dropdown" id="notification-dropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read">Mark all read</button>
+                        </div>
+                        <div class="notification-list" id="notification-list">
+                            <!-- Notifications will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="user-profile">
+                    <button class="profile-btn" id="profile-btn">
+                        <div class="profile-avatar">⚙️</div>
+                        <span class="profile-name" id="profile-name">Admin</span>
+                        <span class="profile-arrow">▼</span>
+                    </button>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-info">
+                            <div class="profile-avatar-large">⚙️</div>
+                            <div class="profile-details">
+                                <h4 id="profile-full-name">System Admin</h4>
+                                <p id="profile-email">admin@foodrescue.com</p>
+                                <span class="profile-role" id="profile-role">ADMIN</span>
+                            </div>
+                        </div>
+                        <div class="profile-menu">
+                            <a href="#" onclick="showProfile()">👤 Admin Profile</a>
+                            <a href="#" onclick="showSettings()">⚙️ System Settings</a>
+                            <a href="#" onclick="showHelp()">❓ Help & Support</a>
+                            <hr>
+                            <a href="#" onclick="logout()" class="logout-btn">🚪 Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-        <!-- Main Content -->
-        <main class="dashboard-main">
-            <!-- Welcome Section -->
+        <!-- Dashboard Sidebar -->
+        <aside class="dashboard-sidebar" id="dashboard-sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <h3>Main</h3>
+                    <nav class="sidebar-nav" id="sidebar-nav">
+                        <!-- Navigation items will be populated by JavaScript -->
+                    </nav>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions" id="quick-actions">
+                        <!-- Quick action buttons will be populated by JavaScript -->
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>System Status</h3>
+                    <div class="system-status">
+                        <div class="status-item">
+                            <span class="status-indicator online"></span>
+                            <span class="status-text">API Server</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-indicator online"></span>
+                            <span class="status-text">Database</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-indicator online"></span>
+                            <span class="status-text">Storage</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Recent Activity</h3>
+                    <div class="recent-activity" id="recent-activity">
+                        <!-- Recent activity will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="app-version">
+                    <small>Food Rescue v1.0 Admin</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main" id="dashboard-main">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="breadcrumb-item active">System Overview</span>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-header">
+                <h1 class="page-title" id="page-title">Admin Dashboard</h1>
+                <div class="page-actions" id="page-actions">
+                    <button class="btn btn-warning" onclick="dashboardManager.showUserVerification()">
+                        👤 Verify Users
+                    </button>
+                    <button class="btn btn-info" onclick="dashboardManager.showReports()">
+                        📊 Generate Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="content-container" id="content-container">
+                <!-- Dashboard Overview Section -->
+                <section class="content-section" id="overview-section">
+                    <div class="section-header">
+                        <h2>System Overview</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-secondary" onclick="refreshOverview()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="overview-grid" id="overview-grid">
+                        <!-- Overview cards will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Dynamic Content Area -->
+                <section class="content-section" id="dynamic-content">
+                    <!-- Admin welcome and system management -->
+                    <div class="section-header">
+                        <h2>System Management Center</h2>
+                    </div>
+                    <div class="section-content" style="padding: 30px;">
+                        <div class="welcome-content">
+                            <h3>⚙️ Food Rescue Platform Administration</h3>
+                            <p>Welcome to the admin dashboard! Here you can manage the entire Food Rescue platform, oversee user activities, monitor system performance, and ensure the smooth operation of food rescue operations.</p>
+                            
+                            <div class="admin-sections" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-top: 30px;">
+                                <div class="admin-card" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 25px; border-radius: 12px;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">👥</div>
+                                    <h4>User Management</h4>
+                                    <p>Manage donor and NGO accounts, verify organizations, handle user support requests, and monitor platform usage.</p>
+                                    <ul style="font-size: 14px; margin: 15px 0; opacity: 0.9;">
+                                        <li>Verify new NGO registrations</li>
+                                        <li>Monitor user activity and engagement</li>
+                                        <li>Handle account issues and disputes</li>
+                                        <li>Manage user permissions and roles</li>
+                                    </ul>
+                                    <button class="btn btn-secondary" onclick="dashboardManager.navigate('#users')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">Manage Users</button>
+                                </div>
+                                
+                                <div class="admin-card" style="background: linear-gradient(135deg, #27ae60, #2ecc71); color: white; padding: 25px; border-radius: 12px;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">🍎</div>
+                                    <h4>Donation Oversight</h4>
+                                    <p>Monitor food donations, track platform matches, ensure food safety compliance, and optimize distribution efficiency.</p>
+                                    <ul style="font-size: 14px; margin: 15px 0; opacity: 0.9;">
+                                        <li>Track donation flow and matching success</li>
+                                        <li>Monitor food safety and quality standards</li>
+                                        <li>Identify trends and optimization opportunities</li>
+                                        <li>Handle donation disputes and issues</li>
+                                    </ul>
+                                    <button class="btn btn-secondary" onclick="dashboardManager.navigate('#donations')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">View Donations</button>
+                                </div>
+                                
+                                <div class="admin-card" style="background: linear-gradient(135deg, #f39c12, #e67e22); color: white; padding: 25px; border-radius: 12px;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">📈</div>
+                                    <h4>Analytics & Reports</h4>
+                                    <p>Generate comprehensive reports, analyze platform performance, track impact metrics, and identify growth opportunities.</p>
+                                    <ul style="font-size: 14px; margin: 15px 0; opacity: 0.9;">
+                                        <li>Platform usage and engagement analytics</li>
+                                        <li>Food waste reduction impact reports</li>
+                                        <li>Geographic distribution analysis</li>
+                                        <li>Financial and operational metrics</li>
+                                    </ul>
+                                    <button class="btn btn-secondary" onclick="dashboardManager.navigate('#analytics')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">View Analytics</button>
+                                </div>
+                                
+                                <div class="admin-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad); color: white; padding: 25px; border-radius: 12px;">
+                                    <div style="font-size: 32px; margin-bottom: 15px;">⚙️</div>
+                                    <h4>System Configuration</h4>
+                                    <p>Configure platform settings, manage system integrations, monitor server performance, and maintain security protocols.</p>
+                                    <ul style="font-size: 14px; margin: 15px 0; opacity: 0.9;">
+                                        <li>Platform configuration and feature toggles</li>
+                                        <li>API integrations and third-party services</li>
+                                        <li>Security settings and access controls</li>
+                                        <li>System monitoring and maintenance</li>
+                                    </ul>
+                                    <button class="btn btn-secondary" onclick="dashboardManager.navigate('#settings')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">System Settings</button>
+                                </div>
+                            </div>
+                            
+                            <div class="system-alerts" style="margin-top: 40px; padding: 25px; background: linear-gradient(135deg, #fff3cd, #ffeaa7); border-radius: 12px; border-left: 4px solid #f39c12;">
+                                <h4 style="color: #e67e22; margin-bottom: 15px;">🚨 System Alerts & Actions Needed</h4>
+                                <div style="display: grid; gap: 15px;">
+                                    <div class="alert-item" style="background: white; padding: 15px; border-radius: 8px; border-left: 3px solid #f39c12;">
+                                        <strong>5 NGO Accounts Pending Verification</strong>
+                                        <p style="margin: 5px 0; font-size: 14px; color: #6c757d;">New organizations are waiting for admin approval to start collecting food.</p>
+                                        <button class="btn btn-warning btn-sm" onclick="dashboardManager.showUserVerification()">Review Now</button>
+                                    </div>
+                                    <div class="alert-item" style="background: white; padding: 15px; border-radius: 8px; border-left: 3px solid #3498db;">
+                                        <strong>Weekly System Report Ready</strong>
+                                        <p style="margin: 5px 0; font-size: 14px; color: #6c757d;">Platform performance and impact metrics for this week are available.</p>
+                                        <button class="btn btn-info btn-sm" onclick="dashboardManager.showReports()">View Report</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Dashboard Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2025 Food Rescue Matchmaker. All rights reserved.</p>
+                </div>
+                <div class="footer-right">
+                    <a href="#" onclick="showHelp()">Help</a>
+                    <a href="#" onclick="showPrivacy()">Privacy</a>
+                    <a href="#" onclick="showTerms()">Terms</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/app.js"></script>
+    <script src="../js/dashboard-common.js"></script>
+    <script src="../js/admin-dashboard.js"></script>
+</body>
+</html>
+
+<style>
+.system-status {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #27ae60;
+}
+
+.status-indicator.online {
+    background: #27ae60;
+    box-shadow: 0 0 4px rgba(39, 174, 96, 0.5);
+}
+
+.status-indicator.offline {
+    background: #e74c3c;
+    box-shadow: 0 0 4px rgba(231, 76, 60, 0.5);
+}
+
+.status-indicator.warning {
+    background: #f39c12;
+    box-shadow: 0 0 4px rgba(243, 156, 18, 0.5);
+}
+
+.status-text {
+    opacity: 0.8;
+}
+</style>
             <section class="welcome-section">
                 <h2>System overview and management</h2>
                 <div class="quick-stats">
