@@ -83,21 +83,24 @@ def match_partial_split(donation: Dict, ngos: List[Dict], ml_model) -> Tuple[Lis
     
     if ml_model is not None:
         try:
-            print("🧠 Using ML model for allocation predictions...")
+            print("� USING ML MODEL: Starting intelligent allocation predictions...")
             for ngo_data in ngo_features:
                 features_array = np.array([ngo_data["features"]])
                 prediction = ml_model.predict(features_array)[0]
                 ngo_data["ml_score"] = prediction
             ml_predictions_successful = True
-            print(f"✅ ML predictions successful for {len(ngo_features)} NGOs")
+            print(f"✅ ML PREDICTIONS SUCCESSFUL: Smart scoring complete for {len(ngo_features)} NGOs")
+            print("🎯 ML-FIRST SYSTEM: Using advanced machine learning allocation")
         except Exception as e:
-            print(f"❌ ML model prediction failed: {e}")
-            print("🔄 Falling back to rule-based scoring...")
+            print(f"❌ ML MODEL PREDICTION FAILED: {e}")
+            print("🔄 FALLBACK ACTIVATION: Switching to rule-based scoring...")
             # Fall back to rule-based scoring
             for ngo_data in ngo_features:
                 ngo_data["ml_score"] = _calculate_rule_based_score(ngo_data)
+            print("⚠️ RULE-BASED FALLBACK: Using traditional allocation method")
     else:
-        print("⚠️ No ML model available, using rule-based scoring...")
+        print("⚠️ ML MODEL UNAVAILABLE: No trained model found")
+        print("🔄 RULE-BASED MODE: Using traditional allocation scoring...")
         # No ML model, use rule-based scoring
         for ngo_data in ngo_features:
             ngo_data["ml_score"] = _calculate_rule_based_score(ngo_data)
@@ -134,7 +137,13 @@ def match_partial_split(donation: Dict, ngos: List[Dict], ml_model) -> Tuple[Lis
     if allocations:
         method = "ML" if ml_predictions_successful else "Rule-Based"
         print(f"📊 Allocation complete using {method} method: {len(allocations)} NGOs allocated")
-    
+        if ml_predictions_successful:
+            print("🤖 ✅ ML MODEL USED: Smart prediction-based allocation successful")
+        else:
+            print("⚠️ 🔄 FALLBACK SYSTEM USED: Rule-based allocation due to ML unavailability")
+    else:
+        print("⚠️ No allocations made - check NGO compatibility or capacity")
+
     return allocations, remaining_quantity
 
 

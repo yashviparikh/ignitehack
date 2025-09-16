@@ -36,6 +36,11 @@ def get_allocation(donation, ngos):
     print(f"📍 Available NGOs: {len(ngos)}")
     print("🔧 DEBUG: Using UPDATED allocation.py function with additional fields")
     
+    if ml_model is not None:
+        print("🤖 ML MODEL AVAILABLE: Attempting ML-First allocation...")
+    else:
+        print("⚠️ ML MODEL UNAVAILABLE: Will use rule-based fallback only")
+    
     allocations, remaining = match_partial_split(donation, ngos, ml_model)
     
     # Determine which method was used based on allocation results
@@ -43,8 +48,14 @@ def get_allocation(donation, ngos):
     if allocations:
         if all(alloc.get("allocation_method") == "ML" for alloc in allocations):
             method_used = "ML"
+            print("🎯 ✅ FINAL RESULT: 100% ML-based allocation successful!")
         elif all(alloc.get("allocation_method") == "Rule-Based" for alloc in allocations):
             method_used = "Rule-Based"
+            print("🎯 ⚠️ FINAL RESULT: 100% Rule-based fallback allocation used")
+        else:
+            print("🎯 🔄 FINAL RESULT: Mixed ML and rule-based allocation")
+    else:
+        print("🎯 ❌ FINAL RESULT: No allocations possible (check NGO compatibility)")
     
     result = {
         "donation_id": donation["id"],
@@ -56,4 +67,5 @@ def get_allocation(donation, ngos):
     }
     
     print(f"✅ Allocation complete: {len(allocations)} NGOs matched using {method_used} method")
+    print(f"📊 Summary: {donation['quantity'] - remaining}/{donation['quantity']} units allocated to {len(allocations)} NGOs")
     return result

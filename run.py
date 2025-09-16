@@ -478,17 +478,23 @@ async def allocate_donation(donation_id: int):
             allocation_result = get_allocation(donation_dict, ngos_list)
             print("✅ ML allocation successful!")
             print(f"🔧 ML allocation result keys: {list(allocation_result.keys())}")
+            print("🎉 SYSTEM STATUS: Advanced ML allocation pipeline operational!")
         except Exception as e:
             print(f"❌ ML allocation failed, using simple rule-based allocation: {e}")
             print(f"📊 Error type: {type(e).__name__}")
+            print("🔄 FALLBACK ACTIVATED: Using basic rule-based allocation")
             import traceback
             print(f"📋 Full error: {traceback.format_exc()}")
             # Simple rule-based fallback
             allocation_result = {
                 "donation_id": donation_id,
                 "allocations": [],
-                "remaining_quantity": donation_dict["quantity"]
+                "remaining_quantity": donation_dict["quantity"],
+                "allocation_method": "Simple Rule-Based Fallback",
+                "total_allocated": 0,
+                "ngos_matched": 0
             }
+            print("⚠️ SYSTEM STATUS: Using simplified fallback allocation (limited functionality)")
             
             # Allocate to first 3 NGOs if available
             for i, ngo in enumerate(ngos_list[:3]):
