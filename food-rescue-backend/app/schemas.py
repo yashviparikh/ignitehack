@@ -69,3 +69,18 @@ class PickupResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# ML Allocation schemas
+class AllocationItem(BaseModel):
+    ngo_id: int
+    ngo_name: str
+    allocated_quantity: int
+    priority_score: float
+    distance_km: float
+    reliability: float
+    capacity: int
+
+class AllocationResponse(BaseModel):
+    donation_id: int
+    allocations: list[AllocationItem]
+    remaining_quantity: int

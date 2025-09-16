@@ -10,7 +10,7 @@ import uuid
 import json
 
 from .database import get_db, create_tables, Donation, NGO, Pickup
-from .schemas import DonationCreate, DonationResponse, NGOCreate, NGOResponse, PickupCreate, PickupUpdate, PickupResponse
+from .schemas import DonationCreate, DonationResponse, NGOCreate, NGOResponse, PickupCreate, PickupUpdate, PickupResponse, AllocationResponse
 from .websocket_manager import websocket_manager
 from .allocation import get_allocation
 
@@ -39,9 +39,13 @@ def startup_event():
 def read_root():
     return {"message": "Food Rescue Matchmaker API is running!"}
 
+@app.get("/api/health")
+def health_check():
+    return {"status": "healthy", "message": "Food Rescue Matchmaker API is running!"}
+
 # DONATION ENDPOINTS
 
-@app.post("/donations/", response_model=DonationResponse)
+@app.post("/api/donations/", response_model=DonationResponse)
 async def create_donation(donation: DonationCreate, db: Session = Depends(get_db)):
     """Create a new food donation"""
     db_donation = Donation(**donation.dict())
@@ -66,7 +70,7 @@ async def create_donation(donation: DonationCreate, db: Session = Depends(get_db
     
     return db_donation
 
-@app.get("/donations/", response_model=List[DonationResponse])
+@app.get("/api/donations/", response_model=List[DonationResponse])
 def get_donations(status: str = None, db: Session = Depends(get_db)):
     """Get all donations, optionally filter by status"""
     query = db.query(Donation)
@@ -75,7 +79,7 @@ def get_donations(status: str = None, db: Session = Depends(get_db)):
     donations = query.order_by(Donation.created_at.desc()).all()
     return donations
 
-@app.get("/donations/{donation_id}", response_model=DonationResponse)
+@app.get("/api/donations/{donation_id}", response_model=DonationResponse)
 def get_donation(donation_id: int, db: Session = Depends(get_db)):
     """Get a specific donation"""
     donation = db.query(Donation).filter(Donation.id == donation_id).first()
@@ -83,7 +87,7 @@ def get_donation(donation_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Donation not found")
     return donation
 
-@app.patch("/donations/{donation_id}/status")
+@app.patch("/api/donations/{donation_id}/status")
 async def update_donation_status(donation_id: int, status: str, db: Session = Depends(get_db)):
     """Update donation status"""
     donation = db.query(Donation).filter(Donation.id == donation_id).first()
@@ -99,7 +103,7 @@ async def update_donation_status(donation_id: int, status: str, db: Session = De
     
     return {"message": f"Donation status updated to {status}"}
 
-@app.post("/donations/{donation_id}/upload-photo")
+@app.post("/api/donations/{donation_id}/upload-photo")
 async def upload_photo(donation_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)):
     """Upload photo for a donation"""
     donation = db.query(Donation).filter(Donation.id == donation_id).first()
@@ -121,7 +125,7 @@ async def upload_photo(donation_id: int, file: UploadFile = File(...), db: Sessi
     
     return {"photo_url": donation.photo_url}
 
-@app.post("/donations/{donation_id}/allocate")
+@app.post("/api/donations/{donation_id}/allocate", response_model=AllocationResponse)
 def allocate_donation(donation_id: int, db: Session = Depends(get_db)):
     """Allocate a donation to matching NGOs using ML model"""
     # 1. Fetch donation
@@ -169,13 +173,14 @@ def allocate_donation(donation_id: int, db: Session = Depends(get_db)):
 
     # 4. Call ML allocation
     allocation_result = get_allocation(donation_dict, ngos_list)
-
+    print(allocation_result)
     # 5. Return result
     return allocation_result
+    
 
 # NGO ENDPOINTS
 
-@app.post("/ngos/", response_model=NGOResponse)
+@app.post("/api/ngos/", response_model=NGOResponse)
 def create_ngo(ngo: NGOCreate, db: Session = Depends(get_db)):
     """Register a new NGO"""
     import json
@@ -191,14 +196,14 @@ def create_ngo(ngo: NGOCreate, db: Session = Depends(get_db)):
     db.refresh(db_ngo)
     return db_ngo
 
-@app.get("/ngos/", response_model=List[NGOResponse])
+@app.get("/api/ngos/", response_model=List[NGOResponse])
 def get_ngos(db: Session = Depends(get_db)):
     """Get all NGOs"""
     return db.query(NGO).all()
 
 # PICKUP ENDPOINTS
 
-@app.post("/pickups/", response_model=PickupResponse)
+@app.post("/api/pickups/", response_model=PickupResponse)
 async def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
     """NGO accepts a donation (creates pickup)"""
     # Check if donation exists and is available
@@ -227,7 +232,7 @@ async def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
     
     return db_pickup
 
-@app.patch("/pickups/{pickup_id}")
+@app.patch("/api/pickups/{pickup_id}")
 async def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session = Depends(get_db)):
     """Update pickup status (picked_up, delivered)"""
     pickup = db.query(Pickup).filter(Pickup.id == pickup_id).first()
@@ -269,7 +274,7 @@ async def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session
     
     return {"message": f"Pickup updated to {update.status}"}
 
-@app.get("/pickups/", response_model=List[PickupResponse])
+@app.get("/api/pickups/", response_model=List[PickupResponse])
 def get_pickups(ngo_id: int = None, db: Session = Depends(get_db)):
     """Get all pickups, optionally filter by NGO"""
     query = db.query(Pickup)
@@ -279,7 +284,7 @@ def get_pickups(ngo_id: int = None, db: Session = Depends(get_db)):
 
 # STATISTICS ENDPOINTS
 
-@app.get("/stats/")
+@app.get("/api/stats/")
 def get_statistics(db: Session = Depends(get_db)):
     """Get platform statistics for impact dashboard"""
     total_donations = db.query(Donation).count()

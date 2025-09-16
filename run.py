@@ -15,6 +15,12 @@ import time
 import json
 import asyncio
 
+# Import ML allocation function from backend
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'food-rescue-backend'))
+from app.allocation import get_allocation
+
 # Create FastAPI app
 app = FastAPI(title="Food Rescue Matchmaker API", version="1.0.0")
 
@@ -246,6 +252,19 @@ class PickupCreate(BaseModel):
     donation_id: int
     ngo_id: int
 
+# ML Allocation schemas
+class AllocationItem(BaseModel):
+    ngo_id: int
+    ngo_name: str
+    allocated_quantity: int
+    priority_score: float
+    distance_km: Optional[float] = None
+
+class AllocationResponse(BaseModel):
+    donation_id: int
+    allocations: List[AllocationItem]
+    remaining_quantity: int
+
 # API Endpoints
 
 # Health check - API endpoint
@@ -367,6 +386,88 @@ async def upload_photo(donation_id: int, file: UploadFile = File(...)):
     conn.close()
     
     return {"photo_url": photo_url}
+
+@app.post("/api/donations/{donation_id}/allocate", response_model=AllocationResponse)
+def allocate_donation(donation_id: int):
+    """Allocate a donation to matching NGOs using ML model"""
+    try:
+        conn = sqlite3.connect('food_rescue.db')
+        cursor = conn.cursor()
+        
+        # 1. Get donation details
+        cursor.execute('SELECT * FROM donations WHERE id = ? AND status = "available"', (donation_id,))
+        donation_row = cursor.fetchone()
+        
+        if not donation_row:
+            conn.close()
+            raise HTTPException(status_code=404, detail="Donation not found or not available")
+        
+        # 2. Convert to dict (assuming columns: id, restaurant_name, food_type, food_description, quantity, expiry_hours, latitude, longitude, pickup_address, donor_user, status, created_at, photo_url)
+        donation_dict = {
+            "id": donation_row[0],
+            "restaurant_name": donation_row[1],
+            "food_type": donation_row[2],
+            "food_description": donation_row[3],
+            "quantity": donation_row[4],
+            "expiry_hours": donation_row[5],
+            "latitude": donation_row[6],
+            "longitude": donation_row[7],
+            "pickup_address": donation_row[8],
+            "donor_user": donation_row[9],
+            "status": donation_row[10]
+        }
+        
+        # 3. Get all NGOs
+        cursor.execute('SELECT * FROM ngos')
+        ngo_rows = cursor.fetchall()
+        conn.close()
+        
+        # Convert NGOs to list of dicts (assuming columns: id, name, contact_phone, latitude, longitude, accepted_food_types, capacity, reliability, recent_donations, schedule, created_at)
+        ngos_list = []
+        for ngo_row in ngo_rows:
+            ngos_list.append({
+                "id": ngo_row[0],
+                "name": ngo_row[1],
+                "contact_phone": ngo_row[2],
+                "latitude": ngo_row[3],
+                "longitude": ngo_row[4],
+                "accepted_food_types": ngo_row[5],
+                "capacity": ngo_row[6] if ngo_row[6] else 50,  # Default capacity
+                "reliability": ngo_row[7] if ngo_row[7] else 3.0,  # Default reliability
+                "recent_donations": ngo_row[8] if ngo_row[8] else 0,
+                "schedule": ngo_row[9]
+            })
+        
+        # 4. Call ML allocation (fallback to rule-based if import fails)
+        try:
+            allocation_result = get_allocation(donation_dict, ngos_list)
+        except Exception as e:
+            print(f"ML allocation failed, using simple rule-based allocation: {e}")
+            # Simple rule-based fallback
+            allocation_result = {
+                "donation_id": donation_id,
+                "allocations": [],
+                "remaining_quantity": donation_dict["quantity"]
+            }
+            
+            # Allocate to first 3 NGOs if available
+            for i, ngo in enumerate(ngos_list[:3]):
+                if allocation_result["remaining_quantity"] > 0:
+                    allocated = min(10, allocation_result["remaining_quantity"])  # Allocate max 10 per NGO
+                    allocation_result["allocations"].append({
+                        "ngo_id": ngo["id"],
+                        "ngo_name": ngo["name"],
+                        "allocated_quantity": allocated,
+                        "priority_score": 1.0 - (i * 0.2),  # Decreasing priority
+                        "distance_km": None
+                    })
+                    allocation_result["remaining_quantity"] -= allocated
+        
+        return allocation_result
+        
+    except Exception as e:
+        print(f"Error in allocation: {e}")
+        raise HTTPException(status_code=500, detail=f"Allocation failed: {str(e)}")
 
 @app.post("/api/ngos/")
 def create_ngo(ngo: NGOCreate):
