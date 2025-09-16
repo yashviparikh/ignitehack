@@ -156,10 +156,9 @@
 
         <div class="test-controls">
             <button class="btn" onclick="runAllTests()">🚀 Run All Tests</button>
-            <button class="btn" onclick="runFlowTests()">🔄 Test User Flow</button>
-            <button class="btn" onclick="runValidationTests()">✅ Test Validation</button>
-            <button class="btn danger" onclick="clearResults()">🗑️ Clear Results</button>
+            <button class="btn danger" onclick="clearResults()">�️ Clear Results</button>
             <button class="btn success" onclick="openLandingPage()">👀 Open Landing Page</button>
+            <button class="btn" onclick="exportConsoleToFile()" style="background: #9b59b6;">� Export</button>
         </div>
 
         <div class="test-progress">
@@ -574,7 +573,52 @@
 
         // Open landing page in new tab
         function openLandingPage() {
-            window.open('index.html', '_blank');
+            window.open('html/index.html', '_blank');
+        }
+
+        // Export console logs to downloadable text file
+        function exportConsoleToFile() {
+            const consoleElement = document.getElementById('console-output');
+            const consoleText = consoleElement ? consoleElement.textContent : 'No console output available';
+            
+            // Get current timestamp
+            const now = new Date();
+            const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, -5);
+            
+            // Create comprehensive export data
+            const exportData = `
+=== FOOD RESCUE MATCHMAKER TEST SUITE EXPORT ===
+Generated: ${now.toLocaleString()}
+User Agent: ${navigator.userAgent}
+Platform: ${navigator.platform}
+URL: ${window.location.href}
+
+=== TEST CONSOLE OUTPUT ===
+${consoleText}
+
+=== SYSTEM INFO ===
+Screen Resolution: ${window.screen.width}x${window.screen.height}
+Viewport: ${window.innerWidth}x${window.innerHeight}
+Language: ${navigator.language}
+Online Status: ${navigator.onLine}
+Cookies Enabled: ${navigator.cookieEnabled}
+
+=== END OF EXPORT ===
+            `.trim();
+
+            // Create blob and download
+            const blob = new Blob([exportData], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `food-rescue-test-export-${timestamp}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            logToConsole('📁 Test results exported to file: food-rescue-test-export-' + timestamp + '.txt');
+            logToConsole('✅ Export completed successfully!');
         }
 
         // Initialize on page load
