@@ -158,13 +158,57 @@ donation = {
     "lon": 77.5946
 }
 
-allocations, remaining = match_partial_split_ml(donation, ngos, ml_model)
+# allocations, remaining = match_partial_split_ml(donation, ngos, ml_model)
 
-print("\n=== Donation Allocation (ML-driven) ===")
+# print("\n=== Donation Allocation (ML-driven) ===")
+# for alloc in allocations:
+#     print(f"{alloc['ngo_name']} receives {alloc['allocated_quantity']} meals (Score: {alloc['score']:.3f})")
+
+# if remaining > 0:
+#     print(f"\nRemaining {remaining} meals offered to public volunteers")
+# else:
+#     print("\nAll donation allocated to NGOs")
+
+
+def generate_donations(n=10):
+    food_types = ["cooked", "bakery", "fruits"]
+    donations = []
+    for i in range(1, n+1):
+        donation = {
+            "id": i,
+            "food_type": random.choice(food_types),
+            "quantity": random.randint(50, 300),
+            "expiry_hours": random.randint(1, 12),
+            "lat": 12.9716 + random.uniform(-0.01, 0.01),
+            "lon": 77.5946 + random.uniform(-0.01, 0.01)
+        }
+        donations.append(donation)
+    return donations
+def allocate_multiple_donations(donations, ngos):
+    all_allocations = []
+    total_allocated = 0
+    total_donations = sum(d["quantity"] for d in donations)
+    
+    for donation in donations:
+        allocations, remaining = match_partial_split_ml(donation, ngos,ml_model)
+        all_allocations.append({
+            "donation_id": donation["id"],
+            "allocations": allocations,
+            "remaining": remaining
+        })
+        total_allocated += sum(a["allocated_quantity"] for a in allocations)
+    
+    accuracy = total_allocated / total_donations
+    return all_allocations, accuracy
+donations = generate_donations(n=10)  # generate 10 test donations
+
+allocations, accuracy = allocate_multiple_donations(donations, ngos)
+
 for alloc in allocations:
-    print(f"{alloc['ngo_name']} receives {alloc['allocated_quantity']} meals (Score: {alloc['score']:.3f})")
+    print(f"\nDonation {alloc['donation_id']} allocation:")
+    for a in alloc['allocations']:
+        print(f"  {a['ngo_name']} receives {a['allocated_quantity']} meals (Score: {a['score']})")
+    if alloc['remaining'] > 0:
+        print(f"  Remaining {alloc['remaining']} meals offered to public volunteers")
 
-if remaining > 0:
-    print(f"\nRemaining {remaining} meals offered to public volunteers")
-else:
-    print("\nAll donation allocated to NGOs")
+print(f"\nOverall allocation accuracy: {accuracy*100:.2f}%")
