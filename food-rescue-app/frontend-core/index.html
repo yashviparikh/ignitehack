@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Rescue Matchmaker</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation Bar -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <h1>🍽️ Food Rescue Matchmaker</h1>
+                <p>Connecting surplus food with those who need it</p>
+            </div>
+        </nav>
+
+        <!-- Progress Steps Indicator -->
+        <div class="steps-indicator">
+            <div class="step active" id="step-1">
+                <div class="step-number">1</div>
+                <div class="step-label">Welcome</div>
+            </div>
+            <div class="step" id="step-2">
+                <div class="step-number">2</div>
+                <div class="step-label">Choose Role</div>
+            </div>
+            <div class="step" id="step-3">
+                <div class="step-number">3</div>
+                <div class="step-label">Login</div>
+            </div>
+        </div>
+
+        <!-- Step 1: Hero Section -->
+        <section id="hero-section" class="hero-section">
+            <div class="hero-content">
+                <h2>🍽️ Food Rescue Matchmaker</h2>
+                <p>"Connecting surplus food with those who need it"</p>
+                <div class="hero-description">
+                    <p>Join our community of food rescuers and help reduce waste while feeding those in need</p>
+                </div>
+                <div class="cta-buttons">
+                    <button class="btn-primary" onclick="showRoleSelection()">Get Started</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Learn More Section - Only visible on welcome page -->
+        <section id="learn-more-section" class="learn-more-section">
+            <div class="learn-more-content">
+                <h2>About Food Rescue Matchmaker</h2>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <div class="about-icon">🎯</div>
+                        <h3>Our Mission</h3>
+                        <p>To connect surplus food with those who need it most, reducing waste and fighting hunger in our communities.</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">🤝</div>
+                        <h3>How It Works</h3>
+                        <p>Donors post available food, NGOs find and collect donations, and we track the impact together.</p>
+                    </div>
+                    <div class="about-card">
+                        <div class="about-icon">📊</div>
+                        <h3>Our Impact</h3>
+                        <p>Join thousands of users who have already rescued tons of food and provided millions of meals.</p>
+                    </div>
+                </div>
+                
+                <div class="impact-stats">
+                    <div class="impact-stat">
+                        <div class="stat-number">2.3M</div>
+                        <div class="stat-label">Meals Rescued</div>
+                    </div>
+                    <div class="impact-stat">
+                        <div class="stat-number">850+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <div class="impact-stat">
+                        <div class="stat-number">45+</div>
+                        <div class="stat-label">Partner NGOs</div>
+                    </div>
+                    <div class="impact-stat">
+                        <div class="stat-number">12</div>
+                        <div class="stat-label">Cities Covered</div>
+                    </div>
+                </div>
+                
+                <div class="cta-section">
+                    <p class="cta-text">Ready to make a difference? Join our community today!</p>
+                    <button class="btn-primary btn-large" onclick="showRoleSelection()">Join Now</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Role Selection -->
+        <section id="role-selection" class="role-selection hidden">
+            <h2>👤 Choose Your Role</h2>
+            <p class="role-instruction">Select your role to continue with the registration process</p>
+            <div class="role-cards">
+                <div class="role-card donor" onclick="selectRole('donor')">
+                    <div class="role-icon">🍞</div>
+                    <h3>DONOR</h3>
+                    <p>I have food to donate</p>
+                    <button class="role-btn">Select Role</button>
+                </div>
+                
+                <div class="role-card ngo" onclick="selectRole('ngo')">
+                    <div class="role-icon">🏢</div>
+                    <h3>NGO</h3>
+                    <p>I collect donations</p>
+                    <button class="role-btn">Select Role</button>
+                </div>
+                
+                <div class="role-card admin" onclick="selectRole('admin')">
+                    <div class="role-icon">⚙️</div>
+                    <h3>ADMIN</h3>
+                    <p>Platform management</p>
+                    <button class="role-btn">Admin Access</button>
+                </div>
+            </div>
+            <div class="step-navigation">
+                <button class="btn-back" onclick="showHero()">← Back</button>
+            </div>
+        </section>
+
+        <!-- Step 3: Login/Register -->
+        <section id="login-section" class="login-section hidden">
+            <div class="login-container">
+                <div class="selected-role-display">
+                    <div class="role-badge">
+                        <span id="selected-role-icon">🍞</span>
+                        <span id="selected-role-text">Donor</span>
+                    </div>
+                </div>
+                <h2 id="login-title">🔐 Login</h2>
+                <form id="login-form" class="login-form">
+                    <div class="form-group">
+                        <label for="email">📧 Email:</label>
+                        <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">🔒 Password:</label>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                    
+                    <div id="confirm-password-group" class="form-group hidden">
+                        <label for="confirm-password">Confirm Password:</label>
+                        <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirm your password">
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="auth-submit-btn">Login</button>
+                    </div>
+                    
+                    <div class="auth-switch">
+                        <p id="auth-switch-text">Don't have an account?</p>
+                        <button type="button" class="link-button" onclick="toggleRegister()" id="auth-toggle-btn">
+                            Register
+                        </button>
+                    </div>
+                </form>
+                <div class="step-navigation">
+                    <button class="btn-back" onclick="showRoleSelection()">← Back to Role Selection</button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/landing.js"></script>
+</body>
+</html>
