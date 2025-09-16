@@ -9,6 +9,7 @@ import websockets
 import json
 import requests
 import sys
+import sys
 
 async def test_single_ngo_notification():
     """Quick test with one NGO connection"""
@@ -19,6 +20,7 @@ async def test_single_ngo_notification():
     # Connect to NGO WebSocket (NGO ID 1)
     ngo_id = 1
     uri = f"ws://localhost:8000/ws/ngo/{ngo_id}"
+    websocket = None
     
     try:
         print(f"🔌 Connecting to NGO {ngo_id}...")
@@ -26,16 +28,22 @@ async def test_single_ngo_notification():
         print(f"✅ Connected to NGO {ngo_id}")
         
         # Listen for notifications in background
+        notification_received = None
+        
         async def listen():
+            nonlocal notification_received
             try:
-                async for message in websocket:
+                while True:
+                    message = await websocket.recv()
                     data = json.loads(message)
                     print(f"\n🔔 NOTIFICATION RECEIVED!")
                     print(f"📊 {json.dumps(data, indent=2)}")
-                    return data  # Return first notification
+                    notification_received = data
+                    break  # Exit after first notification
+            except websockets.exceptions.ConnectionClosed:
+                print(f"🔌 WebSocket connection closed")
             except Exception as e:
                 print(f"❌ Listen error: {e}")
-                return None
         
         listen_task = asyncio.create_task(listen())
         
@@ -62,8 +70,8 @@ async def test_single_ngo_notification():
             
             # Wait for notification (with timeout)
             try:
-                notification = await asyncio.wait_for(listen_task, timeout=10.0)
-                if notification:
+                await asyncio.wait_for(listen_task, timeout=10.0)
+                if notification_received:
                     print(f"✅ SUCCESS! Notification received")
                     return True
                 else:
@@ -81,7 +89,8 @@ async def test_single_ngo_notification():
         return False
     finally:
         try:
-            await websocket.close()
+            if websocket is not None:
+                await websocket.close()
         except:
             pass
 

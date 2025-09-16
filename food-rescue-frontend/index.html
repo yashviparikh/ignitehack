@@ -736,6 +736,47 @@
     </div>
 
     <div id="notifications"></div>
+    
+    <!-- 🔔 Toast Notification System -->
+    <div id="toast" style="
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #333;
+        color: #fff;
+        padding: 0.8rem 1.2rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: none;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        z-index: 10005;
+        cursor: pointer;
+        transition: opacity 0.3s ease, background-color 0.2s ease, transform 0.3s ease;
+        opacity: 1;
+        max-width: 500px;
+        min-width: 300px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+        -webkit-transform: translateX(-50%) translateZ(0);
+        transform: translateX(-50%) translateZ(0);
+        overflow: hidden;
+        text-align: center;
+        line-height: 1.4;
+    " title="Click to keep visible">
+        <!-- Progress bar overlay -->
+        <div id="toast-progress" style="
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: linear-gradient(90deg, #4CAF50, #66BB6A);
+            transition: width 0.3s ease, background 0.3s ease;
+            z-index: 1;
+        "></div>
+    </div>
     </div> <!-- End main-app container -->
 
     <script>
@@ -762,6 +803,8 @@
         let reconnectAttempts = 0;
         const maxReconnectAttempts = 5;
         let reconnectTimeout = null;
+        
+       
 
         // Initialize WebSocket connection (completely silent and transparent)
         function initWebSocket() {
@@ -848,6 +891,26 @@
 
         // Silent handlers - just refresh data without notifications
         function handleNewDonationSilent(data) {
+            console.log('🎯 NEW DONATION NOTIFICATION TRIGGERED!', data);
+            
+            // Show toast notification for new donations (only to NGOs to avoid spam for donors)
+            if (userRole === 'ngo') {
+                console.log('✅ User is NGO - showing notification with SOUND!');
+                
+                const message = `🍽️ New Food Donation Available!\n\n` +
+                    `📍 Restaurant: ${data.restaurant_name}\n` +
+                    `🍽️ Food Type: ${data.food_type}\n` +
+                    `📦 Quantity: ${data.quantity} servings\n` +
+                    `⏰ Expiry: ${data.expiry_hours || 'Not specified'} hours\n\n` +
+                    `Check your NGO dashboard for details!`;
+                
+                console.log('🔊 CALLING showToast WITH SOUND = TRUE');
+                showToast(message, 6000, data, 'info', true); // TRUE = Play coin sound for new donations!
+                console.log('🎵 showToast called successfully!');
+            } else {
+                console.log('❌ User is not NGO, no notification shown');
+            }
+            
             // Refresh available donations silently
             const activeDashboard = document.querySelector('.dashboard.active').id;
             if (activeDashboard === 'ngo-dashboard') {
@@ -859,6 +922,18 @@
         }
 
         function handleDonationAcceptedSilent(data) {
+            // Show toast notification for donors when their donation gets accepted
+            if (userRole === 'donor') {
+                const message = `🎉 Great News!\n\n` +
+                    `Your donation "${data.food_type}" has been accepted by an NGO!\n\n` +
+                    `📍 Restaurant: ${data.restaurant_name}\n` +
+                    `🏢 NGO: ${data.ngo_name || 'An NGO partner'}\n` +
+                    `📦 Quantity: ${data.quantity} servings\n\n` +
+                    `Thank you for making a difference!`;
+                
+                showToast(message, 8000, data, 'success');
+            }
+            
             // Refresh current view silently
             const activeDashboard = document.querySelector('.dashboard.active').id;
             if (activeDashboard === 'donor-dashboard') {
@@ -869,6 +944,27 @@
         }
 
         function handleStatusUpdateSilent(data) {
+            // Show toast notification for status changes
+            if (data.old_status !== data.new_status) {
+                let message = '';
+                let toastType = 'info';
+                
+                if (data.new_status === 'accepted' && userRole === 'donor') {
+                    message = `✅ Your donation (ID: ${data.donation_id}) has been accepted!`;
+                    toastType = 'success';
+                } else if (data.new_status === 'picked_up' && userRole === 'donor') {
+                    message = `📦 Your donation (ID: ${data.donation_id}) has been picked up! Thank you for your contribution.`;
+                    toastType = 'success';
+                } else if (data.new_status === 'completed' && userRole === 'donor') {
+                    message = `🎉 Your donation (ID: ${data.donation_id}) has been successfully delivered!`;
+                    toastType = 'success';
+                }
+                
+                if (message) {
+                    showToast(message, 5000, data, toastType);
+                }
+            }
+            
             // Refresh all relevant views silently
             const activeDashboard = document.querySelector('.dashboard.active').id;
             if (activeDashboard === 'donor-dashboard') {
@@ -888,88 +984,34 @@
             }
         }
 
-        // Handle real-time allocation notifications for NGOs
+        // Handle real-time allocation notifications for NGOs - ENHANCED WITH TOAST SYSTEM
         function handleAllocationNotification(data) {
             console.log('🎯 New allocation received:', data);
             
             // Only show notification if user is in NGO role
             if (userRole === 'ngo') {
-                // Create attractive notification
+                // Rich toast notification with enhanced formatting
                 const isUrgent = data.urgent || false;
-                const urgentClass = isUrgent ? 'urgent' : '';
                 const urgentIcon = isUrgent ? '🚨' : '🍽️';
+                const urgentText = isUrgent ? 'URGENT ALLOCATION!' : 'New Food Allocation';
                 
-                // Show prominent notification
-                const notificationHtml = `
-                    <div class="allocation-notification ${urgentClass}" style="
-                        position: fixed; top: 20px; right: 20px; z-index: 10000;
-                        background: ${isUrgent ? 'linear-gradient(135deg, #ff6b6b, #ee5a24)' : 'linear-gradient(135deg, #4facfe, #00f2fe)'};
-                        color: white; padding: 20px; border-radius: 15px;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                        max-width: 350px; animation: slideInRight 0.5s ease-out;
-                        border-left: 5px solid ${isUrgent ? '#c0392b' : '#2980b9'};
-                    ">
-                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            <span style="font-size: 24px; margin-right: 10px;">${urgentIcon}</span>
-                            <h4 style="margin: 0; font-size: 16px;">
-                                ${isUrgent ? 'URGENT ALLOCATION!' : 'New Food Allocation'}
-                            </h4>
-                            <button onclick="this.parentElement.parentElement.remove()" style="
-                                background: none; border: none; color: white; font-size: 18px;
-                                margin-left: auto; cursor: pointer; padding: 0 5px;
-                            ">×</button>
-                        </div>
-                        <p style="margin: 8px 0; font-size: 14px; line-height: 1.4;">
-                            <strong>${data.food_type}</strong> from ${data.restaurant_name}
-                        </p>
-                        <p style="margin: 8px 0; font-size: 13px; opacity: 0.9;">
-                            📦 ${data.allocated_quantity} servings allocated to you
-                            ${data.expiry_hours ? `⏰ Expires in ${data.expiry_hours}h` : ''}
-                        </p>
-                        <div style="margin-top: 15px; display: flex; gap: 10px;">
-                            <button onclick="viewAllocationDetails(${data.donation_id})" style="
-                                background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
-                                color: white; padding: 8px 15px; border-radius: 8px; cursor: pointer;
-                                font-size: 12px; transition: all 0.3s ease;
-                            " onmouseover="this.style.background='rgba(255,255,255,0.3)'" 
-                               onmouseout="this.style.background='rgba(255,255,255,0.2)'">
-                                View Details
-                            </button>
-                            <button onclick="acceptAllocation(${data.donation_id})" style="
-                                background: rgba(255,255,255,0.9); border: none;
-                                color: #333; padding: 8px 15px; border-radius: 8px; cursor: pointer;
-                                font-size: 12px; font-weight: bold; transition: all 0.3s ease;
-                            " onmouseover="this.style.background='white'" 
-                               onmouseout="this.style.background='rgba(255,255,255,0.9)'">
-                                Accept
-                            </button>
-                        </div>
-                    </div>
-                `;
+                const message = `${urgentIcon} ${urgentText}\n\n` +
+                    `📍 Restaurant: ${data.restaurant_name}\n` +
+                    `🍽️ Food Type: ${data.food_type}\n` +
+                    `📦 Your Allocation: ${data.allocated_quantity} servings\n` +
+                    `⏰ Expires in: ${data.expiry_hours || 'N/A'} hours\n\n` +
+                    `Click this notification for details or check NGO dashboard.`;
                 
-                // Add to page
-                document.body.insertAdjacentHTML('beforeend', notificationHtml);
+                // Use different colors and durations for urgent vs normal allocations
+                const toastType = isUrgent ? 'warning' : 'success';
+                const duration = isUrgent ? 10000 : 7000; // Urgent stays longer
                 
-                // Auto-remove after 15 seconds
-                setTimeout(() => {
-                    const notification = document.querySelector('.allocation-notification');
-                    if (notification) {
-                        notification.style.animation = 'slideOutRight 0.5s ease-in';
-                        setTimeout(() => notification.remove(), 500);
-                    }
-                }, 15000);
+                showToast(message, duration, data, toastType, true); // TRUE = Play coin sound for ML allocation!
                 
-                // Refresh available donations to show the new allocation
-                if (document.querySelector('#ngo-dashboard').classList.contains('active')) {
+                // Auto-refresh NGO dashboard to show new allocation
+                if (document.querySelector('.dashboard.active').id === 'ngo-dashboard') {
                     loadAvailableDonations();
                 }
-                
-                // Play notification sound (optional)
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvGMcBjiS2PKweSwFJnfF8N2QQwoUXLPm6qZUFApGnt/wvGQcBjaS2PKweSwGJHfE8N2QQwoUW7Pn6qVUFAdEnt/wvGMcBjaS2PKxeS0GJHbD8N2QQgoTW7Pl6qVUFQdEnt/wvGMdBjiS2PKxeSsFJXfE8N6QQgoUW7Pp6aVUFQdEnt/wvGMdBjiS2PKxeSsFJHfE8N6QQgoTW7Pl6qRUFQdFn+DwvGMcBjiS2PKxeSsFJHfE8N6QQgoTW7Pn6qRUFQdEn+DwvGQcBjaS2PKxeSsFJHfE8N6QQgoTW7Pn6qRUFQdEn+DwvGQcBjaS2PKxeSsFJHfE8N6QQgoTW7Pn6qRUFQdEn+DwvGQcBjaS2PKxeSsFJHfE8N6QQgoT'); 
-                    audio.volume = 0.3;
-                    audio.play().catch(() => {});
-                } catch (e) {}
             }
         }
 
@@ -1344,14 +1386,202 @@
             if (type === 'impact') loadImpactData();
         }
 
-        // Notifications
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            document.getElementById('notifications').appendChild(notification);
+        // 🔔 Toast Notification System - Enhanced with sound and click-outside-dismiss
+        let toastTimeout = null;
+        let lastToastMessage = '';
+        let isPersistentToast = false;
+        
+        // Create audio context for coin sound
+        function playCoinSound() {
+            console.log('🪙 playCoinSound() FUNCTION CALLED!');
+            try {
+                // Create AudioContext
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                console.log('✅ AudioContext created successfully');
+                
+                // Create coin sound using Web Audio API
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                console.log('✅ Oscillator and gain nodes created');
+                
+                // Connect nodes
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                console.log('✅ Audio nodes connected');
+                
+                // Configure coin sound (upward sweep like a coin pickup)
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.exponentialRampToValueAtTime(1046.5, audioContext.currentTime + 0.1); // C6
+                console.log('✅ Frequency configured (C5 -> C6 sweep)');
+                
+                // Volume envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                console.log('✅ Volume envelope configured');
+                
+                // Play
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+                console.log('🔊 COIN SOUND PLAYING NOW! 🪙✨');
+                
+            } catch (error) {
+                console.error('❌ COIN SOUND ERROR:', error);
+                console.log('🔇 Audio not available:', error.message);
+            }
+        }
+
+        function showToast(message, duration = 3000, transferData = null, type = 'default', playSound = false) {
+            const toast = document.getElementById('toast');
+            if (!toast) {
+                console.warn('⚠️ Toast element not found');
+                return;
+            }
             
-            setTimeout(() => notification.remove(), 5000);
+            // Clear any existing timeout
+            if (toastTimeout) {
+                clearTimeout(toastTimeout);
+                toastTimeout = null;
+            }
+            
+            // Reset persistent state
+            isPersistentToast = false;
+            
+            // Set message and data
+            toast.innerText = message;
+            lastToastMessage = message;
+            
+            // Store transfer data for detailed view
+            if (transferData) {
+                toast._transferData = transferData;
+            } else {
+                delete toast._transferData;
+            }
+            
+            // Determine background color based on type and duration
+            let backgroundColor = '#333'; // Default
+            if (duration === 0) { // Persistent toast
+                if (type === 'error') {
+                    backgroundColor = '#dc3545'; // Red for error
+                } else if (type === 'warning') {
+                    backgroundColor = '#ffc107'; // Yellow for warning
+                } else {
+                    backgroundColor = '#27ae60'; // Green for success/default persistent
+                }
+            } else {
+                // Non-persistent toasts can also have colors based on type
+                if (type === 'info') {
+                    backgroundColor = '#17a2b8'; // Blue for info
+                } else if (type === 'warning') {
+                    backgroundColor = '#ffc107'; // Yellow for warning  
+                } else if (type === 'error') {
+                    backgroundColor = '#dc3545'; // Red for error
+                } else if (type === 'success') {
+                    backgroundColor = '#28a745'; // Green for success
+                }
+            }
+            
+            // Batch style changes
+            Object.assign(toast.style, {
+                display: 'block',
+                opacity: '1',
+                transform: 'translateX(-50%) translateY(0)',
+                backgroundColor: backgroundColor,
+                whiteSpace: 'normal'
+            });
+            toast.title = 'Click to keep visible';
+            
+            console.log(`🔔 Toast: ${message}`);
+            
+            // Play coin sound for allocation notifications (database events)
+            if (playSound) {
+                console.log('🎵 playSound = TRUE - Playing coin sound NOW!');
+                playCoinSound();
+                console.log('🔊 playCoinSound() called successfully!');
+            } else {
+                console.log('🔇 playSound = FALSE - No sound will play');
+            }
+            
+            // Auto-hide unless duration is 0 (persistent)
+            if (duration > 0) {
+                toastTimeout = setTimeout(() => {
+                    hideToast();
+                }, duration);
+            }
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            
+            // Don't hide if persistent
+            if (isPersistentToast) return;
+            
+            // Clear timeout
+            if (toastTimeout) {
+                clearTimeout(toastTimeout);
+                toastTimeout = null;
+            }
+            
+            // Hide animation
+            Object.assign(toast.style, {
+                opacity: '0',
+                transform: 'translateX(-50%) translateY(20px)'
+            });
+            
+            setTimeout(() => {
+                if (!isPersistentToast) {
+                    toast.style.display = 'none';
+                    delete toast._transferData;
+                }
+            }, 300);
+        }
+
+        // Initialize toast click handler and click-outside-to-dismiss
+        window.addEventListener('load', () => {
+            const toast = document.getElementById('toast');
+            if (toast) {
+                toast.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent document click from firing
+                    
+                    // Toggle persistent mode on click
+                    isPersistentToast = !isPersistentToast;
+                    
+                    if (toastTimeout) {
+                        clearTimeout(toastTimeout);
+                        toastTimeout = null;
+                    }
+                    
+                    this.title = isPersistentToast ? 'Click to auto-hide' : 'Click to keep visible';
+                    console.log(`🔔 Toast persistence: ${isPersistentToast ? 'ON' : 'OFF'}`);
+                });
+            }
+            
+            // Click outside to dismiss toast
+            document.addEventListener('click', function(e) {
+                const toast = document.getElementById('toast');
+                if (toast && toast.style.display === 'block') {
+                    // Check if click is outside toast
+                    if (!toast.contains(e.target)) {
+                        console.log('👆 Clicked outside toast - dismissing');
+                        hideToast();
+                    }
+                }
+            });
+        });
+
+        // Notifications - Updated to use toast system
+        function showNotification(message, type = 'success') {
+            // Use toast system instead of the old notification system
+            let duration = 4000; // Default duration
+            
+            // Adjust duration based on message length and type
+            if (message.length > 100) duration = 6000;
+            if (type === 'error') duration = 5000;
+            if (type === 'success') duration = 3000;
+            
+            showToast(message, duration, null, type);
         }
 
         // Geolocation

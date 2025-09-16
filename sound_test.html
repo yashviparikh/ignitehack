@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔊 Coin Sound Test - Food Rescue Notifications</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+        }
+        
+        .test-button:active {
+            transform: translateY(0);
+        }
+        
+        .coin-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.3);
+            font-size: 20px;
+            padding: 20px 40px;
+        }
+        
+        .coin-button:hover {
+            box-shadow: 0 8px 25px rgba(240, 147, 251, 0.4);
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            border-left: 5px solid #4facfe;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+            text-align: left;
+        }
+        
+        .info-box h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .sound-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 1px solid #bbdefb;
+        }
+        
+        .code-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            text-align: left;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪙 Coin Sound Test</h1>
+        <p class="subtitle">Test the notification sound for ML food allocations</p>
+        
+        <div class="info-box">
+            <h3>🎯 When This Sound Plays:</h3>
+            <ul>
+                <li><strong>ML Algorithm finds matches</strong> - When our machine learning system successfully allocates food to NGOs</li>
+                <li><strong>Database notification events</strong> - Real allocation notifications (not manual actions)</li>
+                <li><strong>NGO receives allocation</strong> - Only when food is actually assigned to an NGO</li>
+            </ul>
+        </div>
+        
+        <div class="sound-grid">
+            <button class="test-button coin-button" onclick="playCoinSound()">
+                🪙 Coin Sound (ML Match)
+            </button>
+            
+            <button class="test-button" onclick="playBeepSound()">
+                🔔 Simple Beep
+            </button>
+            
+            <button class="test-button" onclick="playSuccessSound()">
+                ✅ Success Chime
+            </button>
+            
+            <button class="test-button" onclick="playUrgentSound()">
+                🚨 Urgent Alert
+            </button>
+            
+            <button class="test-button" onclick="playPowerUpSound()">
+                ⚡ Power Up
+            </button>
+            
+            <button class="test-button" onclick="playNotificationSound()">
+                📱 Phone Notification
+            </button>
+            
+            <button class="test-button" onclick="playPickupSound()">
+                📦 Pickup Ready
+            </button>
+            
+            <button class="test-button" onclick="playLevelUpSound()">
+                🎮 Level Up
+            </button>
+            
+            <button class="test-button" onclick="playWhistleSound()">
+                🎵 Whistle
+            </button>
+            
+            <button class="test-button" onclick="playBellSound()">
+                🔔 Bell Ring
+            </button>
+            
+            <button class="test-button" onclick="playClickSound()">
+                👆 Click Sound
+            </button>
+            
+            <button class="test-button" onclick="playDrumRoll()">
+                🥁 Drum Roll
+            </button>
+        </div>
+        
+        <div id="status" class="status">
+            🔇 Click any button to test sounds. Make sure your volume is on!
+        </div>
+        
+        <div class="info-box">
+            <h3>🔧 Technical Implementation:</h3>
+            <div class="code-preview">
+<span class="highlight">function playCoinSound() {</span>
+    // Create AudioContext for Web Audio API
+    const audioContext = new AudioContext();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    // Configure coin sound (upward frequency sweep)
+    oscillator.type = 'square';
+    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+    oscillator.frequency.exponentialRampToValueAtTime(1046.5, audioContext.currentTime + 0.1); // C6
+    
+    // Volume envelope for natural sound
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    
+    // Play the sound
+    oscillator.start(); oscillator.stop(audioContext.currentTime + 0.2);
+<span class="highlight">}</span>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>🎵 Sound Design Choices:</h3>
+            <ul>
+                <li><strong>🪙 Coin Sound</strong> - Classic upward frequency sweep (523Hz → 1046Hz) for ML matches</li>
+                <li><strong>⚡ Power Up</strong> - Ascending arpeggio (C-E-G-C chord) for success events</li>
+                <li><strong>📱 Phone Notification</strong> - Dual beep pattern for standard alerts</li>
+                <li><strong>🎮 Level Up</strong> - Victory fanfare melody for achievements</li>
+                <li><strong>🔔 Bell Ring</strong> - Multi-harmonic bell with natural decay</li>
+                <li><strong>🎵 Whistle</strong> - Frequency modulated sine wave for attention</li>
+                <li><strong>📦 Pickup Ready</strong> - Descending notes (E-D-C) for completion</li>
+                <li><strong>🥁 Drum Roll</strong> - Rapid noise bursts for dramatic effect</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Update status function
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.style.background = isError ? '#ffebee' : '#e3f2fd';
+            status.style.color = isError ? '#c62828' : '#1976d2';
+            status.style.border = isError ? '1px solid #ffcdd2' : '1px solid #bbdefb';
+        }
+        
+        // Main coin sound function (exact copy from food rescue app)
+        function playCoinSound() {
+            try {
+                updateStatus('🪙 Playing coin sound... (ML allocation notification)');
+                
+                // Create AudioContext
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create coin sound using Web Audio API
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Connect nodes
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Configure coin sound (upward sweep like a coin pickup)
+                oscillator.type = 'square';
+                oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                oscillator.frequency.exponentialRampToValueAtTime(1046.5, audioContext.currentTime + 0.1); // C6
+                
+                // Volume envelope
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                // Play
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.2);
+                
+                console.log('🔊 Coin sound played successfully!');
+                
+                setTimeout(() => {
+                    updateStatus('✅ Coin sound completed! This plays when ML finds food matches.');
+                }, 300);
+                
+            } catch (error) {
+                console.error('❌ Audio error:', error);
+                updateStatus('❌ Audio not available: ' + error.message, true);
+            }
+        }
+        
+        // Alternative simple beep sound
+        function playBeepSound() {
+            try {
+                updateStatus('🔔 Playing simple beep...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Simple beep - single tone
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+                
+                setTimeout(() => {
+                    updateStatus('✅ Simple beep completed!');
+                }, 400);
+                
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Success sound - two-tone ascending
+        function playSuccessSound() {
+            try {
+                updateStatus('✅ Playing success sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // First tone
+                setTimeout(() => {
+                    const osc1 = audioContext.createOscillator();
+                    const gain1 = audioContext.createGain();
+                    osc1.connect(gain1);
+                    gain1.connect(audioContext.destination);
+                    
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    gain1.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                    
+                    osc1.start();
+                    osc1.stop(audioContext.currentTime + 0.15);
+                }, 0);
+                
+                // Second tone
+                setTimeout(() => {
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(659.25, audioContext.currentTime); // E5
+                    gain2.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    
+                    osc2.start();
+                    osc2.stop(audioContext.currentTime + 0.2);
+                }, 100);
+                
+                setTimeout(() => {
+                    updateStatus('✅ Success sound completed!');
+                }, 500);
+                
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Urgent sound - rapid beeps
+        function playUrgentSound() {
+            try {
+                updateStatus('🚨 Playing urgent sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(1000, audioContext.currentTime); // High pitch for urgency
+                        gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.1);
+                    }, i * 150);
+                }
+                
+                setTimeout(() => {
+                    updateStatus('🚨 Urgent sound completed!');
+                }, 600);
+                
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Power up sound - ascending arpeggio
+        function playPowerUpSound() {
+            try {
+                updateStatus('⚡ Playing power up sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const frequencies = [261.63, 329.63, 392.00, 523.25]; // C-E-G-C chord
+                
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = 'sawtooth';
+                        osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.2);
+                    }, index * 80);
+                });
+                
+                setTimeout(() => updateStatus('⚡ Power up completed!'), 800);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Phone notification sound
+        function playNotificationSound() {
+            try {
+                updateStatus('📱 Playing phone notification...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Two quick beeps
+                [0, 150].forEach((delay, index) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(800 + (index * 200), audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.15, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.1);
+                    }, delay);
+                });
+                
+                setTimeout(() => updateStatus('📱 Phone notification completed!'), 400);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Pickup ready sound - descending notes
+        function playPickupSound() {
+            try {
+                updateStatus('📦 Playing pickup ready sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const frequencies = [659.25, 587.33, 523.25]; // E-D-C descending
+                
+                frequencies.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.15);
+                    }, index * 120);
+                });
+                
+                setTimeout(() => updateStatus('📦 Pickup sound completed!'), 500);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Level up sound - victory fanfare
+        function playLevelUpSound() {
+            try {
+                updateStatus('🎮 Playing level up sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Victory melody: C-E-G-C
+                const melody = [
+                    {freq: 523.25, time: 0},     // C
+                    {freq: 659.25, time: 150},  // E
+                    {freq: 783.99, time: 300},  // G
+                    {freq: 1046.5, time: 450}   // C (higher)
+                ];
+                
+                melody.forEach(note => {
+                    setTimeout(() => {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(note.freq, audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.25, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        
+                        osc.start();
+                        osc.stop(audioContext.currentTime + 0.3);
+                    }, note.time);
+                });
+                
+                setTimeout(() => updateStatus('🎮 Level up completed!'), 900);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Whistle sound
+        function playWhistleSound() {
+            try {
+                updateStatus('🎵 Playing whistle sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(2000, audioContext.currentTime);
+                osc.frequency.linearRampToValueAtTime(1500, audioContext.currentTime + 0.1);
+                osc.frequency.linearRampToValueAtTime(2200, audioContext.currentTime + 0.2);
+                
+                gain.gain.setValueAtTime(0, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.02);
+                gain.gain.linearRampToValueAtTime(0.15, audioContext.currentTime + 0.18);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.3);
+                
+                setTimeout(() => updateStatus('🎵 Whistle completed!'), 400);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Bell ring sound
+        function playBellSound() {
+            try {
+                updateStatus('🔔 Playing bell ring...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create multiple harmonics for bell-like sound
+                const fundamentalFreq = 440; // A4
+                const harmonics = [1, 2, 3, 4, 5];
+                const volumes = [0.3, 0.15, 0.1, 0.05, 0.03];
+                
+                harmonics.forEach((harmonic, index) => {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(fundamentalFreq * harmonic, audioContext.currentTime);
+                    
+                    gain.gain.setValueAtTime(volumes[index], audioContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.0);
+                    
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 1.0);
+                });
+                
+                setTimeout(() => updateStatus('🔔 Bell ring completed!'), 1100);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Click sound
+        function playClickSound() {
+            try {
+                updateStatus('👆 Playing click sound...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(1200, audioContext.currentTime);
+                
+                gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.05);
+                
+                setTimeout(() => updateStatus('👆 Click completed!'), 100);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Drum roll sound
+        function playDrumRoll() {
+            try {
+                updateStatus('🥁 Playing drum roll...');
+                
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create rapid noise bursts for drum effect
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        // Create noise using multiple oscillators
+                        const osc1 = audioContext.createOscillator();
+                        const osc2 = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        
+                        osc1.connect(gain);
+                        osc2.connect(gain);
+                        gain.connect(audioContext.destination);
+                        
+                        osc1.type = 'sawtooth';
+                        osc2.type = 'square';
+                        osc1.frequency.setValueAtTime(80 + Math.random() * 40, audioContext.currentTime);
+                        osc2.frequency.setValueAtTime(120 + Math.random() * 60, audioContext.currentTime);
+                        
+                        gain.gain.setValueAtTime(0.05, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.02);
+                        
+                        osc1.start();
+                        osc2.start();
+                        osc1.stop(audioContext.currentTime + 0.02);
+                        osc2.stop(audioContext.currentTime + 0.02);
+                    }, i * 25);
+                }
+                
+                setTimeout(() => updateStatus('🥁 Drum roll completed!'), 600);
+            } catch (error) {
+                updateStatus('❌ Audio error: ' + error.message, true);
+            }
+        }
+        
+        // Check audio support on load
+        window.addEventListener('load', () => {
+            if ('AudioContext' in window || 'webkitAudioContext' in window) {
+                updateStatus('🔊 Audio system ready! Click buttons to test sounds.');
+            } else {
+                updateStatus('⚠️ Web Audio API not supported in this browser.', true);
+            }
+        });
+    </script>
+</body>
+</html>
