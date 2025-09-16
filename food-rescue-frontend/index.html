@@ -1356,11 +1356,6 @@
 
         // Geolocation
         function getLocation() {
-            console.log('🔍 getLocation() called');
-            console.log('🌐 Current protocol:', location.protocol);
-            console.log('🏠 Current hostname:', location.hostname);
-            console.log('🔌 navigator.geolocation available:', !!navigator.geolocation);
-            
             if (navigator.geolocation) {
                 document.getElementById('location-status').textContent = '📍 Getting high-accuracy location...';
                 navigator.geolocation.getCurrentPosition(
@@ -1446,11 +1441,6 @@
                         console.log('High-accuracy location captured:', currentLocation, 'Accuracy:', accuracy + 'm');
                     },
                     (error) => {
-                        console.log('🚨 Geolocation error details:');
-                        console.log('   - Error code:', error.code);
-                        console.log('   - Error message:', error.message);
-                        console.log('   - Error object:', error);
-                        
                         let errorMessage = 'Location failed';
                         let isSecurityError = false;
                         
