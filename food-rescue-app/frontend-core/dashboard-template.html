@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{DASHBOARD_TITLE}} - Food Rescue Matchmaker</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/{{ROLE}}.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <!-- Dashboard Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <div class="logo">
+                    <h1>🍎 Food Rescue</h1>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search..." id="dashboard-search">
+                    <button class="search-btn">🔍</button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="notifications">
+                    <button class="notification-btn" id="notification-btn">
+                        🔔
+                        <span class="notification-badge" id="notification-badge">3</span>
+                    </button>
+                    <div class="notification-dropdown" id="notification-dropdown">
+                        <div class="notification-header">
+                            <h3>Notifications</h3>
+                            <button class="mark-all-read">Mark all read</button>
+                        </div>
+                        <div class="notification-list" id="notification-list">
+                            <!-- Notifications will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="user-profile">
+                    <button class="profile-btn" id="profile-btn">
+                        <div class="profile-avatar">👤</div>
+                        <span class="profile-name" id="profile-name">User Name</span>
+                        <span class="profile-arrow">▼</span>
+                    </button>
+                    <div class="profile-dropdown" id="profile-dropdown">
+                        <div class="profile-info">
+                            <div class="profile-avatar-large">👤</div>
+                            <div class="profile-details">
+                                <h4 id="profile-full-name">User Name</h4>
+                                <p id="profile-email">user@example.com</p>
+                                <span class="profile-role" id="profile-role">{{ROLE_DISPLAY}}</span>
+                            </div>
+                        </div>
+                        <div class="profile-menu">
+                            <a href="#" onclick="showProfile()">👤 My Profile</a>
+                            <a href="#" onclick="showSettings()">⚙️ Settings</a>
+                            <a href="#" onclick="showHelp()">❓ Help & Support</a>
+                            <hr>
+                            <a href="#" onclick="logout()" class="logout-btn">🚪 Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Sidebar -->
+        <aside class="dashboard-sidebar" id="dashboard-sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <h3>Main</h3>
+                    <nav class="sidebar-nav" id="sidebar-nav">
+                        <!-- Navigation items will be populated based on role -->
+                    </nav>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions" id="quick-actions">
+                        <!-- Quick action buttons will be populated based on role -->
+                    </div>
+                </div>
+                
+                <div class="sidebar-section">
+                    <h3>Recent Activity</h3>
+                    <div class="recent-activity" id="recent-activity">
+                        <!-- Recent activity will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="app-version">
+                    <small>Food Rescue v1.0</small>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-main" id="dashboard-main">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="breadcrumb-item active">Dashboard</span>
+            </div>
+
+            <!-- Page Title -->
+            <div class="page-header">
+                <h1 class="page-title" id="page-title">{{DASHBOARD_TITLE}}</h1>
+                <div class="page-actions" id="page-actions">
+                    <!-- Page-specific action buttons will be added here -->
+                </div>
+            </div>
+
+            <!-- Content Sections -->
+            <div class="content-container" id="content-container">
+                <!-- Dashboard Overview Section -->
+                <section class="content-section" id="overview-section">
+                    <div class="section-header">
+                        <h2>Overview</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-secondary" onclick="refreshOverview()">🔄 Refresh</button>
+                        </div>
+                    </div>
+                    <div class="overview-grid" id="overview-grid">
+                        <!-- Overview cards will be populated here -->
+                    </div>
+                </section>
+
+                <!-- Dynamic Content Area -->
+                <section class="content-section" id="dynamic-content">
+                    <!-- Page-specific content will be loaded here -->
+                </section>
+            </div>
+        </main>
+
+        <!-- Dashboard Footer -->
+        <footer class="dashboard-footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <p>&copy; 2025 Food Rescue Matchmaker. All rights reserved.</p>
+                </div>
+                <div class="footer-right">
+                    <a href="#" onclick="showHelp()">Help</a>
+                    <a href="#" onclick="showPrivacy()">Privacy</a>
+                    <a href="#" onclick="showTerms()">Terms</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Overlay for mobile -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/app.js"></script>
+    <script src="../js/dashboard-common.js"></script>
+    <script src="../js/{{ROLE}}-dashboard.js"></script>
+</body>
+</html>
