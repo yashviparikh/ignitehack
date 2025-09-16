@@ -14,6 +14,7 @@ import threading
 import time
 import json
 import asyncio
+import socket
 
 # Import ML allocation function from backend
 import sys
@@ -219,8 +220,16 @@ def startup_event():
     init_db()
     # Auto-open browser after a short delay
     def open_browser():
-        time.sleep(1.5)  # Wait for server to start
-        webbrowser.open("http://127.0.0.1:8000")
+        time.sleep(2)  # Wait for server to start
+        # Try to get local IP for browser opening
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            webbrowser.open(f"http://{local_ip}:8000")
+        except:
+            webbrowser.open("http://localhost:8000")
     
     # Run in a separate thread so it doesn't block startup
     threading.Thread(target=open_browser, daemon=True).start()
@@ -742,4 +751,39 @@ def get_websocket_stats():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    import socket
+    
+    # Get local IP addresses
+    def get_local_ip():
+        try:
+            # Connect to a remote address to determine the local IP
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            return local_ip
+        except:
+            return "Unable to determine"
+    
+    local_ip = get_local_ip()
+    port = 8000
+    
+    print("\n" + "="*60)
+    print("🍽️  FOOD RESCUE MATCHMAKER API SERVER")
+    print("="*60)
+    print(f"🌐 Server starting on ALL network interfaces")
+    print(f"🏠 Local access: http://localhost:{port}")
+    print(f"🌍 LAN access: http://{local_ip}:{port}")
+    print(f"📱 Mobile/Other devices: http://{local_ip}:{port}")
+    print("\n📋 Additional LAN IPs that might work:")
+    print(f"   • http://192.168.56.1:{port}")
+    print(f"   • http://192.168.185.2:{port}")
+    print(f"   • http://10.110.8.197:{port}")
+    print("\n🚀 API Documentation: http://{ip}:{port}/docs".replace("{ip}", local_ip))
+    print("🔗 Frontend: http://{ip}:{port}".replace("{ip}", local_ip))
+    print("="*60)
+    print("⏹️  Press Ctrl+C to stop the server")
+    print("="*60 + "\n")
+    
+    # Run server on all interfaces (0.0.0.0)
+    uvicorn.run(app, host="0.0.0.0", port=port)

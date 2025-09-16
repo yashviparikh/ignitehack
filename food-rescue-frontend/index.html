@@ -695,7 +695,12 @@
     </div> <!-- End main-app container -->
 
     <script>
-        const API_BASE = 'http://127.0.0.1:8000/api';
+        // Dynamic API configuration - automatically detects current host
+        const getCurrentHost = () => {
+            return window.location.protocol + '//' + window.location.hostname + ':8000';
+        };
+        
+        const API_BASE = getCurrentHost() + '/api';
         let currentNGO = null; // Will store complete NGO data object
         let currentLocation = null;
         let currentUser = null; // Will store current user info
@@ -717,7 +722,7 @@
         // Initialize WebSocket connection (completely silent and transparent)
         function initWebSocket() {
             const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${wsProtocol}//127.0.0.1:8000/ws`;
+            const wsUrl = `${wsProtocol}//${window.location.hostname}:8000/ws`;
             
             try {
                 websocket = new WebSocket(wsUrl);
@@ -1641,7 +1646,7 @@
                     <p><strong>Expires in:</strong> ${donation.expiry_hours || 'Not specified'} hours</p>
                     <p><strong>Status:</strong> <span class="status ${donation.status}">${donation.status}</span></p>
                     <p><strong>Posted:</strong> ${formatDate(donation.created_at)}</p>
-                    ${donation.photo_url ? `<img src="${donation.photo_url.startsWith('/uploads/') ? 'http://127.0.0.1:8000' + donation.photo_url : API_BASE + donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}
+                    ${donation.photo_url ? `<img src="${donation.photo_url.startsWith('/uploads/') ? getCurrentHost() + donation.photo_url : API_BASE + donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}
                     ${donation.pickup_address ? `<p><strong>📍 Address:</strong> ${donation.pickup_address}</p>` : ''}
                     ${donation.latitude ? `
                         <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #007bff;">
