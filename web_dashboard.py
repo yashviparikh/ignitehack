@@ -79,13 +79,60 @@ class DashboardHandler(BaseHTTPRequestHandler):
             self.send_response(404)
             self.end_headers()
     
+    def do_POST(self):
+        parsed_path = urlparse(self.path)
+        
+        if parsed_path.path == '/api/clear-database':
+            self.clear_database()
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def clear_database(self):
+        """Clear all data from database tables while preserving schema"""
+        try:
+            conn = sqlite3.connect(self.server.db_path)
+            cursor = conn.cursor()
+            
+            # Delete all data but preserve schema
+            cursor.execute("DELETE FROM pickups")
+            cursor.execute("DELETE FROM donations") 
+            cursor.execute("DELETE FROM ngos")
+            
+            # Reset auto-increment counters
+            cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('donations', 'ngos', 'pickups')")
+            
+            conn.commit()
+            conn.close()
+            
+            # Return success response
+            response = json.dumps({'success': True, 'message': 'Database cleared successfully'})
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(response.encode())))
+            self.end_headers()
+            self.wfile.write(response.encode())
+            
+        except Exception as e:
+            # Return error response
+            response = json.dumps({'success': False, 'error': str(e)})
+            
+            self.send_response(500)
+            self.send_header('Content-type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Content-Length', str(len(response.encode())))
+            self.end_headers()
+            self.wfile.write(response.encode())
+    
     def serve_dashboard(self):
         """Serve the main HTML dashboard"""
         html_content = self.generate_dashboard_html()
         
         self.send_response(200)
         self.send_header('Content-type', 'text/html')
-        self.send_header('Content-Length', len(html_content.encode()))
+        self.send_header('Content-Length', str(len(html_content.encode())))
         self.end_headers()
         self.wfile.write(html_content.encode())
     
@@ -99,7 +146,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*')
-        self.send_header('Content-Length', len(json_data.encode()))
+        self.send_header('Content-Length', str(len(json_data.encode())))
         self.end_headers()
         self.wfile.write(json_data.encode())
     
@@ -279,6 +326,35 @@ class DashboardHandler(BaseHTTPRequestHandler):
             font-size: 0.9em;
             color: #666;
         }
+        
+        .clear-button {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .clear-button:hover {
+            background: linear-gradient(135deg, #ff5252, #d32f2f);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+        
+        .clear-button:active {
+            transform: translateY(0);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
     </style>
 </head>
 <body>
@@ -286,6 +362,12 @@ class DashboardHandler(BaseHTTPRequestHandler):
         <div class="header">
             <h1>🍽️ Food Rescue Database Dashboard</h1>
             <p>Real-time monitoring of donations, NGOs, and pickups</p>
+            
+            <div class="button-container">
+                <button class="clear-button" onclick="clearDatabase()">
+                    🗑️ Clear Database
+                </button>
+            </div>
         </div>
         
         <div class="refresh-indicator" id="refreshIndicator">
@@ -488,6 +570,40 @@ class DashboardHandler(BaseHTTPRequestHandler):
                     <strong>Error:</strong> ${message}
                 </div>
             `;
+        }
+        
+        async function clearDatabase() {
+            if (!confirm('⚠️ Are you sure you want to clear the entire database?\\n\\nThis will delete ALL donations, NGOs, and pickups data.\\nThis action cannot be undone!')) {
+                return;
+            }
+            
+            try {
+                document.getElementById('refreshIndicator').innerHTML = '🧹 Clearing database...';
+                document.getElementById('refreshIndicator').classList.add('pulse');
+                
+                const response = await fetch('/api/clear-database', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ Database cleared successfully!\\n\\nAll data has been removed and auto-increment counters have been reset.');
+                    // Refresh the data immediately
+                    await fetchData();
+                } else {
+                    alert(`❌ Failed to clear database: ${result.error}`);
+                }
+                
+            } catch (error) {
+                alert(`❌ Error clearing database: ${error.message}`);
+            } finally {
+                document.getElementById('refreshIndicator').innerHTML = '🔄 Auto-refreshing...';
+                document.getElementById('refreshIndicator').classList.remove('pulse');
+            }
         }
         
         async function fetchData() {
