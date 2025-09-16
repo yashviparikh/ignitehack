@@ -606,11 +606,41 @@
                     
                     <div class="form-group">
                         <label>Photo Upload</label>
-                        <div class="photo-upload" onclick="document.getElementById('photo-input').click()">
-                            <input type="file" id="photo-input" accept="image/*" style="display: none" onchange="handlePhotoUpload(this)">
-                            <p>📷 Click to upload photo or drag and drop</p>
-                            <div id="photo-preview"></div>
+                        
+                        <!-- Photo upload options -->
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <button type="button" class="btn" onclick="openCamera()" style="flex: 1; background: #e74c3c;">
+                                📸 Take Photo
+                            </button>
+                            <button type="button" class="btn" onclick="document.getElementById('photo-input').click()" style="flex: 1; background: #3498db;">
+                                📁 Choose File
+                            </button>
                         </div>
+                        
+                        <!-- Hidden file input -->
+                        <input type="file" id="photo-input" accept="image/*" style="display: none" onchange="handlePhotoUpload(this)">
+                        
+                        <!-- Camera interface (hidden initially) -->
+                        <div id="camera-interface" style="display: none; border: 2px solid #3498db; border-radius: 10px; padding: 20px; background: #f8f9fa;">
+                            <div style="text-align: center; margin-bottom: 15px;">
+                                <h4>📸 Camera</h4>
+                                <video id="camera-video" autoplay style="width: 100%; max-width: 400px; border-radius: 8px; background: #000;"></video>
+                            </div>
+                            <div style="text-align: center; gap: 10px; display: flex; justify-content: center;">
+                                <button type="button" class="btn" onclick="capturePhoto()" style="background: #27ae60;">
+                                    📷 Capture
+                                </button>
+                                <button type="button" class="btn" onclick="closeCamera()" style="background: #e74c3c;">
+                                    ❌ Cancel
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Photo preview area -->
+                        <div class="photo-upload" style="display: none;" id="photo-upload-drop">
+                            <p>📷 Click to upload photo or drag and drop</p>
+                        </div>
+                        <div id="photo-preview"></div>
                     </div>
                     
                     <div class="form-group">
@@ -1934,10 +1964,126 @@
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     document.getElementById('photo-preview').innerHTML = 
-                        `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 5px;">`;
+                        `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                         <p style="margin-top: 10px; color: #27ae60;">✅ Photo selected!</p>`;
                 };
                 reader.readAsDataURL(file);
             }
+        }
+        
+        // Camera functionality
+        let cameraStream = null;
+        let cameraVideo = null;
+        
+        async function openCamera() {
+            console.log('📸 Opening camera...');
+            
+            try {
+                // Request camera permission
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 },
+                        facingMode: 'environment' // Use back camera on mobile
+                    } 
+                });
+                
+                // Show camera interface
+                document.getElementById('camera-interface').style.display = 'block';
+                cameraVideo = document.getElementById('camera-video');
+                cameraVideo.srcObject = cameraStream;
+                
+                console.log('✅ Camera opened successfully!');
+                showToast('📸 Camera ready! Position your food and click Capture', 3000, null, 'info');
+                
+            } catch (error) {
+                console.error('❌ Camera error:', error);
+                
+                let errorMessage = '❌ Camera not available. ';
+                if (error.name === 'NotAllowedError') {
+                    errorMessage += 'Please allow camera access and try again.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage += 'No camera found on device.';
+                } else {
+                    errorMessage += 'Please use "Choose File" instead.';
+                }
+                
+                showToast(errorMessage, 5000, null, 'error');
+            }
+        }
+        
+        async function capturePhoto() {
+            console.log('📷 Capturing photo...');
+            
+            if (!cameraVideo || !cameraStream) {
+                showToast('❌ Camera not ready', 3000, null, 'error');
+                return;
+            }
+            
+            try {
+                // Create canvas to capture photo
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                
+                // Set canvas size to video size
+                canvas.width = cameraVideo.videoWidth;
+                canvas.height = cameraVideo.videoHeight;
+                
+                // Draw current video frame to canvas
+                context.drawImage(cameraVideo, 0, 0);
+                
+                // Convert canvas to blob
+                canvas.toBlob(async (blob) => {
+                    // Create file from blob
+                    const file = new File([blob], `food-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        document.getElementById('photo-preview').innerHTML = 
+                            `<img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 5px;">
+                             <p style="margin-top: 10px; color: #27ae60;">✅ Photo captured from camera!</p>`;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Store file for upload (simulate file input)
+                    const photoInput = document.getElementById('photo-input');
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(file);
+                    photoInput.files = dataTransfer.files;
+                    
+                    console.log('✅ Photo captured successfully!');
+                    showToast('📷 Photo captured! Ready to submit donation', 3000, null, 'success');
+                    
+                    // Close camera
+                    closeCamera();
+                }, 'image/jpeg', 0.9);
+                
+            } catch (error) {
+                console.error('❌ Capture error:', error);
+                showToast('❌ Failed to capture photo', 3000, null, 'error');
+            }
+        }
+        
+        function closeCamera() {
+            console.log('❌ Closing camera...');
+            
+            // Stop camera stream
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            
+            // Hide camera interface
+            document.getElementById('camera-interface').style.display = 'none';
+            
+            // Clear video
+            if (cameraVideo) {
+                cameraVideo.srcObject = null;
+                cameraVideo = null;
+            }
+            
+            console.log('✅ Camera closed');
         }
 
         // Donation form submission
