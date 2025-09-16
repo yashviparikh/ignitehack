@@ -75,6 +75,11 @@ def init_db():
         cursor.execute('ALTER TABLE donations ADD COLUMN expiry_hours INTEGER')
     except sqlite3.OperationalError:
         pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE donations ADD COLUMN donor_user TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ngos (
@@ -85,6 +90,32 @@ def init_db():
             longitude REAL
         )
     ''')
+    
+    # Add new NGO fields with database migration
+    try:
+        cursor.execute('ALTER TABLE ngos ADD COLUMN accepted_food_types TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE ngos ADD COLUMN capacity INTEGER')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE ngos ADD COLUMN reliability REAL')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE ngos ADD COLUMN recent_donations INTEGER')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE ngos ADD COLUMN schedule TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pickups (
@@ -124,12 +155,18 @@ class DonationCreate(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     pickup_address: Optional[str] = None
+    donor_user: Optional[str] = None       # Username of the donor
 
 class NGOCreate(BaseModel):
     name: str
     contact_phone: str
+    accepted_food_types: Optional[str] = None  # JSON string of accepted food types
+    capacity: Optional[int] = None             # Number of people they can serve
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    reliability: Optional[float] = None        # Rating from 0.0 to 5.0
+    recent_donations: Optional[int] = None     # Count of recent donations handled
+    schedule: Optional[str] = None             # JSON string of operating schedule
 
 class PickupCreate(BaseModel):
     donation_id: int
@@ -153,10 +190,10 @@ def create_donation(donation: DonationCreate):
         expiry_hours = donation.expiry_hours or 24  # Default to 24 hours
         
         cursor.execute('''
-            INSERT INTO donations (restaurant_name, food_type, food_description, quantity, expiry_hours, latitude, longitude, pickup_address)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO donations (restaurant_name, food_type, food_description, quantity, expiry_hours, latitude, longitude, pickup_address, donor_user)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (donation.restaurant_name, food_type, donation.food_description, donation.quantity, 
-              expiry_hours, donation.latitude, donation.longitude, donation.pickup_address))
+              expiry_hours, donation.latitude, donation.longitude, donation.pickup_address, donation.donor_user))
         
         donation_id = cursor.lastrowid
         conn.commit()
@@ -170,14 +207,28 @@ def create_donation(donation: DonationCreate):
         raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @app.get("/api/donations/")
-def get_donations(status: Optional[str] = None):
+def get_donations(status: Optional[str] = None, donor_user: Optional[str] = None):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
     
+    query = 'SELECT * FROM donations'
+    params = []
+    conditions = []
+    
     if status:
-        cursor.execute('SELECT * FROM donations WHERE status = ? ORDER BY created_at DESC', (status,))
-    else:
-        cursor.execute('SELECT * FROM donations ORDER BY created_at DESC')
+        conditions.append('status = ?')
+        params.append(status)
+    
+    if donor_user:
+        conditions.append('donor_user = ?')
+        params.append(donor_user)
+    
+    if conditions:
+        query += ' WHERE ' + ' AND '.join(conditions)
+    
+    query += ' ORDER BY created_at DESC'
+    
+    cursor.execute(query, params)
     
     columns = [description[0] for description in cursor.description]
     donations = [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -234,9 +285,10 @@ def create_ngo(ngo: NGOCreate):
     cursor = conn.cursor()
     
     cursor.execute('''
-        INSERT INTO ngos (name, contact_phone, latitude, longitude)
-        VALUES (?, ?, ?, ?)
-    ''', (ngo.name, ngo.contact_phone, ngo.latitude, ngo.longitude))
+        INSERT INTO ngos (name, contact_phone, latitude, longitude, accepted_food_types, capacity, reliability, recent_donations, schedule)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (ngo.name, ngo.contact_phone, ngo.latitude, ngo.longitude, 
+          ngo.accepted_food_types, ngo.capacity, ngo.reliability, ngo.recent_donations, ngo.schedule))
     
     ngo_id = cursor.lastrowid
     conn.commit()
