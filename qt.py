@@ -44,7 +44,8 @@ class FoodRescueQuickTest:
             'api_ngos': False,
             'api_pickups': False,
             'api_stats': False,
-            'ml_allocation': False,  # New ML allocation test
+            'ml_allocation': False,  # ML allocation test
+            'ml_model_status': False,  # ML model availability check
             'websocket_connection': False,
             'websocket_broadcasting': False,
             'file_upload': False,
@@ -180,6 +181,9 @@ class FoodRescueQuickTest:
             # Test stats API
             await self._test_stats_api(session)
             
+            # Test ML model status first
+            await self._test_ml_model_status(session)
+            
             # Test ML allocation API
             await self._test_ml_allocation_api(session)
             
@@ -243,19 +247,64 @@ class FoodRescueQuickTest:
         except Exception as e:
             self.log(f"Stats API: {str(e)}", "FAIL")
 
-    async def _test_ml_allocation_api(self, session):
-        """Test ML allocation API endpoint"""
+    async def _test_ml_model_status(self, session):
+        """Test if ML model is loaded and available"""
         try:
-            self.log("Testing ML allocation system...", "INFO")
+            self.log("Checking ML model availability...", "INFO")
+            
+            # Create a simple health check endpoint call
+            # We'll check if the system can access ML components
+            async with session.get(f"{API_BASE}/health") as response:
+                if response.status == 200:
+                    health_data = await response.json()
+                    
+                    # Try to access allocation module to see if ML model is loaded
+                    import sys
+                    import os
+                    
+                    # Check if allocation module can be imported and ML model is available
+                    backend_path = os.path.join(os.path.dirname(__file__), 'food-rescue-backend')
+                    if backend_path not in sys.path:
+                        sys.path.append(backend_path)
+                    
+                    try:
+                        from app.allocation import ml_model
+                        if ml_model is not None:
+                            self.log("✅ ML MODEL: Loaded and available", "PASS")
+                            self.components['ml_model_status'] = True
+                        else:
+                            self.log("⚠️ ML MODEL: Not loaded (using rule-based fallback)", "WARN")
+                            self.components['ml_model_status'] = False
+                    except ImportError as e:
+                        self.log(f"❌ ML MODEL: Import failed - {str(e)}", "FAIL")
+                        self.components['ml_model_status'] = False
+                    except Exception as e:
+                        self.log(f"❌ ML MODEL: Error checking status - {str(e)}", "FAIL")
+                        self.components['ml_model_status'] = False
+                        
+                else:
+                    raise Exception(f"Health check failed: HTTP {response.status}")
+                    
+        except Exception as e:
+            self.log(f"❌ ML Model Status Check: {str(e)}", "FAIL")
+            self.components['ml_model_status'] = False
+
+    async def _test_ml_allocation_api(self, session):
+        """Test ML allocation API endpoint with ML vs Rule-based detection"""
+        try:
+            self.log("Testing ML allocation system (ML-First approach)...", "INFO")
             
             # First, create a test donation
             test_donation = {
                 "restaurant_name": "Test Restaurant ML",
-                "food_description": "Bakery Items",
-                "quantity": 15,
+                "food_type": "Bakery Items",
+                "food_description": "Fresh baked goods",
+                "quantity": 150,
+                "expiry_hours": 4,
                 "latitude": 12.9716,
                 "longitude": 77.5946,
-                "expires_at": "2025-09-17T18:00:00"
+                "pickup_address": "Test Street, Bangalore",
+                "donor_user": "test_ml_user"
             }
             
             async with session.post(f"{API_BASE}/donations/", json=test_donation) as response:
@@ -266,35 +315,53 @@ class FoodRescueQuickTest:
                 donation_id = donation['id']
                 self.log(f"Created test donation ID: {donation_id}", "INFO")
             
-            # Create test NGOs if they don't exist
+            # Create test NGOs with proper schema
             test_ngos = [
                 {
-                    "name": "ML Test NGO 1",
+                    "name": "ML Test NGO Alpha",
                     "contact_phone": "+91-9876543210",
                     "latitude": 12.977980260385616,
                     "longitude": 77.5934550337575,
                     "accepted_food_types": json.dumps(["Bakery Items", "Dairy Products"]),
-                    "storage_capacity": 100,
-                    "operating_schedule": "24/7"
+                    "capacity": 80,
+                    "reliability": 4.2,
+                    "recent_donations": 2,
+                    "schedule": json.dumps({"monday": "9:00-18:00", "tuesday": "9:00-18:00"})
                 },
                 {
-                    "name": "ML Test NGO 2", 
+                    "name": "ML Test NGO Beta", 
                     "contact_phone": "+91-9876543211",
                     "latitude": 12.989101732483828,
                     "longitude": 77.59770279299,
                     "accepted_food_types": json.dumps(["Bakery Items", "Prepared Meals"]),
-                    "storage_capacity": 150,
-                    "operating_schedule": "6AM-10PM"
+                    "capacity": 120,
+                    "reliability": 3.8,
+                    "recent_donations": 5,
+                    "schedule": json.dumps({"monday": "6:00-22:00", "tuesday": "6:00-22:00"})
+                },
+                {
+                    "name": "ML Test NGO Gamma",
+                    "contact_phone": "+91-9876543212", 
+                    "latitude": 12.965840823572706,
+                    "longitude": 77.60459594702892,
+                    "accepted_food_types": json.dumps(["Bakery Items", "Fresh Produce"]),
+                    "capacity": 60,
+                    "reliability": 4.5,
+                    "recent_donations": 1,
+                    "schedule": json.dumps({"monday": "10:00-20:00", "tuesday": "10:00-20:00"})
                 }
             ]
             
+            created_ngos = []
             for ngo_data in test_ngos:
                 async with session.post(f"{API_BASE}/ngos/", json=ngo_data) as response:
                     if response.status == 200:
                         ngo = await response.json()
+                        created_ngos.append(ngo)
                         self.log(f"Created test NGO: {ngo['name']} (ID: {ngo['id']})", "INFO")
             
             # Now test the ML allocation endpoint
+            self.log("Triggering ML allocation...", "INFO")
             allocation_url = f"{API_BASE}/donations/{donation_id}/allocate"
             async with session.post(allocation_url) as response:
                 if response.status == 200:
@@ -306,40 +373,74 @@ class FoodRescueQuickTest:
                         if field not in allocation_result:
                             raise Exception(f"Missing field '{field}' in allocation response")
                     
-                    # Check if we got allocations
+                    # Enhanced validation - check for new fields
                     allocations = allocation_result.get('allocations', [])
                     remaining = allocation_result.get('remaining_quantity', 0)
+                    allocation_method = allocation_result.get('allocation_method', 'Unknown')
+                    total_allocated = allocation_result.get('total_allocated', 0)
+                    ngos_matched = allocation_result.get('ngos_matched', 0)
+                    
+                    # Log overall allocation info
+                    self.log(f"🎯 Allocation Method Used: {allocation_method}", "INFO")
+                    self.log(f"📊 Total Allocated: {total_allocated}/{test_donation['quantity']} units", "INFO")
+                    self.log(f"🏢 NGOs Matched: {ngos_matched}", "INFO")
                     
                     if allocations:
-                        top_allocation = allocations[0]
-                        ngo_name = top_allocation.get('ngo_name', 'Unknown')
-                        allocated_qty = top_allocation.get('allocated_quantity', 0)
-                        priority_score = top_allocation.get('priority_score', 0)
-                        distance = top_allocation.get('distance_km', 0)
+                        self.log("📋 Allocation Details:", "INFO")
+                        for i, allocation in enumerate(allocations, 1):
+                            ngo_name = allocation.get('ngo_name', 'Unknown')
+                            allocated_qty = allocation.get('allocated_quantity', 0)
+                            priority_score = allocation.get('priority_score', 0)
+                            distance = allocation.get('distance_km', 0)
+                            reliability = allocation.get('reliability', 0)
+                            method_used = allocation.get('allocation_method', 'Unknown')
+                            
+                            self.log(f"  {i}. {ngo_name}: {allocated_qty} units", "INFO")
+                            self.log(f"     Score: {priority_score:.2f} | Distance: {distance:.2f}km | Method: {method_used}", "INFO")
                         
-                        self.log(f"ML Allocation: SUCCESS", "PASS")
-                        self.log(f"  → Top match: {ngo_name} ({allocated_qty} units)", "INFO")
-                        self.log(f"  → Priority score: {priority_score:.2f}", "INFO")
-                        self.log(f"  → Distance: {distance:.2f} km", "INFO")
-                        self.log(f"  → Remaining: {remaining} units", "INFO")
+                        # Check if ML model was actually used
+                        ml_used = any(alloc.get('allocation_method') == 'ML' for alloc in allocations)
+                        rule_used = any(alloc.get('allocation_method') == 'Rule-Based' for alloc in allocations)
                         
-                        # Validate allocation logic
-                        if allocated_qty > 0 and priority_score > 0:
-                            self.components['ml_allocation'] = True
-                            self.log("ML allocation logic: VALIDATED", "PASS")
+                        if ml_used and not rule_used:
+                            self.log("✅ ML MODEL: Successfully used for all allocations", "PASS")
+                        elif rule_used and not ml_used:
+                            self.log("⚠️ FALLBACK: Rule-based system used (ML model unavailable)", "WARN")
+                        elif ml_used and rule_used:
+                            self.log("🔄 HYBRID: Mixed ML and rule-based allocation", "INFO")
                         else:
-                            raise Exception("Invalid allocation values")
+                            self.log("❓ UNKNOWN: Allocation method unclear", "WARN")
+                        
+                        # Validate allocation logic using first allocation
+                        first_allocation = allocations[0]
+                        first_allocated_qty = first_allocation.get('allocated_quantity', 0)
+                        first_priority_score = first_allocation.get('priority_score', 0)
+                        
+                        if first_allocated_qty > 0 and first_priority_score > 0:
+                            self.components['ml_allocation'] = True
+                            self.log("🧠 ML allocation system: OPERATIONAL", "PASS")
+                        else:
+                            raise Exception("Invalid allocation values detected")
+                            
+                        # Test allocation consistency
+                        total_check = sum(alloc.get('allocated_quantity', 0) for alloc in allocations)
+                        if total_check == total_allocated:
+                            self.log("✅ Allocation math: CONSISTENT", "PASS")
+                        else:
+                            self.log(f"❌ Allocation math: INCONSISTENT ({total_check} vs {total_allocated})", "FAIL")
+                            
                     else:
-                        self.log("ML Allocation: No matches found (check food type compatibility)", "WARN")
-                        self.components['ml_allocation'] = True  # Still working, just no matches
+                        self.log("⚠️ No allocations found (check NGO compatibility)", "WARN")
+                        self.components['ml_allocation'] = True  # System works, just no matches
                         
                 elif response.status == 404:
                     raise Exception("Donation not found (check API routing)")
                 else:
-                    raise Exception(f"HTTP {response.status}: {await response.text()}")
+                    error_text = await response.text()
+                    raise Exception(f"HTTP {response.status}: {error_text}")
                     
         except Exception as e:
-            self.log(f"ML Allocation API: {str(e)}", "FAIL")
+            self.log(f"❌ ML Allocation API: {str(e)}", "FAIL")
             self.components['ml_allocation'] = False
 
     async def _test_websocket_stats(self, session):
@@ -635,6 +736,7 @@ class FoodRescueQuickTest:
             ('api_donations', '🍽️  Donations API', 'Core donation management'),
             ('api_ngos', '🏢 NGOs API', 'NGO registration and management'),
             ('api_pickups', '🚚 Pickups API', 'Pickup coordination'),
+            ('ml_model_status', '🤖 ML Model', 'Machine learning model availability'),
             ('ml_allocation', '🧠 ML Allocation', 'Smart donation-NGO matching'),
             ('frontend_interface', '🖥️  Web Interface', 'User interface'),
             ('database_operations', '💾 Database Operations', 'Data persistence')
