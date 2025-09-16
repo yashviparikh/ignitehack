@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO: Live Food Delivery Status</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            font-size: 2em;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        p {
+            font-size: 1em;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+        #eta {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            #eta {
+                font-size: 1.2em;
+            }
+            #map-container {
+                height: 400px;
+            }
+        }
+        @media (max-width: 480px) {
+            .container {
+                margin: 5px;
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.2em;
+            }
+            #eta {
+                font-size: 1em;
+            }
+            #map-container {
+                height: 300px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Food Delivery Status</h1>
+        <p>The volunteer is on their way to your location with the food.</p>
+        <div id="eta">Calculating ETA...</div>
+        <div id="map-container"><div id="map"></div></div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        const pickupId = 'pickup-12345';
+        const socket = io('http://localhost:3000');
+        let map;
+        let donorMarker;
+        let ngoMarker;
+        const donorLocation = [19.0176, 72.8561];
+        const ngoLocation = [19.0628, 72.8368];
+
+        function initMap(ngoLocation) {
+            if (map) { map.remove(); }
+            map = L.map('map').setView(ngoLocation, 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            donorMarker = L.marker(donorLocation, { title: 'Donor Location' }).addTo(map);
+            ngoMarker = L.marker(ngoLocation, { title: 'NGO Location' }).addTo(map)
+                .bindPopup('NGO Location').openPopup();
+
+            const bounds = L.latLngBounds([donorLocation, ngoLocation]);
+            map.fitBounds(bounds, { padding: [50, 50] });
+
+            L.Routing.control({
+                waypoints: [
+                    L.latLng(donorLocation[0], donorLocation[1]),
+                    L.latLng(ngoLocation[0], ngoLocation[1])
+                ],
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }),
+                lineOptions: { styles: [{ color: '#007BFF', weight: 6 }] },
+                show: false,
+                routeWhileDragging: false,
+                createMarker: function() { return null; }
+            }).on('routesfound', function(e) {
+                const summary = e.routes[0].summary;
+                const distance = (summary.totalDistance / 1000).toFixed(1);
+                const time = Math.round(summary.totalTime / 60);
+                document.getElementById('eta').innerText = `ETA: ${time} min (${distance} km)`;
+            }).addTo(map);
+            socket.emit('join_pickup', pickupId);
+        }
+
+        socket.on('location_update', (data) => {
+            const newPosition = [data.latitude, data.longitude];
+            donorMarker.setLatLng(newPosition);
+            map.setView(newPosition, 15);
+        });
+
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const ngoLocation = [latitude, longitude];
+                    if (!map) {
+                        initMap(ngoLocation);
+                    }
+                    socket.emit('location_update', { pickupId, latitude, longitude });
+                },
+                (error) => {
+                    document.getElementById('eta').innerText = `Error: ${error.message}. Please enable location services.`;
+                },
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+            );
+        } else {
+            document.getElementById('eta').innerText = "Geolocation is not supported by your browser.";
+            initMap([19.0628, 72.8368]); // Default location as a fallback
+        }
+    </script>
+</body>
+</html>
