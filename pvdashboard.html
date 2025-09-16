@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Public Volunteer Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        li { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        button { padding: 5px 10px; cursor: pointer; }
+        .highlight { background-color: #d4edda; } /* new donation highlight */
+    </style>
+</head>
+<body>
+    <h1>Available Donations</h1>
+    <ul id="donation-list">
+        <li>No donations available at the moment.</li>
+    </ul>
+
+    <script>
+        const ws = new WebSocket("ws://localhost:8765");
+        const donationList = document.getElementById('donation-list');
+
+        ws.onopen = () => console.log("✅ Connected to WebSocket");
+        ws.onerror = (err) => console.error("❌ WebSocket error:", err);
+        ws.onclose = () => console.warn("⚠️ WebSocket closed");
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log("📩 Received:", data);
+
+            if (data.type === "new_donation") {
+                // Remove placeholder if it's the only item
+                if (donationList.children.length === 1 &&
+                    donationList.children[0].textContent.includes("No donations")) {
+                    donationList.innerHTML = "";
+                }
+
+                const li = document.createElement('li');
+                li.className = 'highlight';
+                li.setAttribute('data-id', data.id);
+                li.innerHTML = `
+                    <strong>${data.food_type}</strong> from <strong>${data.restaurant}</strong><br>
+                    Quantity: ${data.quantity}<br>
+                    Pay: ₹${data.discounted_price}<br>
+                    Location: ${data.location}<br>
+                    <button onclick="acceptDonation(${data.id}, this)">Accept</button>
+                `;
+                donationList.prepend(li);
+
+                // remove highlight after 3s
+                setTimeout(() => li.classList.remove('highlight'), 3000);
+            }
+
+            if (data.type === "donation_accepted") {
+                const item = donationList.querySelector(`li[data-id='${data.id}']`);
+                if (item) item.remove();
+            }
+        };
+
+        // Accept donation simulation
+        function acceptDonation(donationId, button) {
+            fetch(`/accept/${donationId}/VOLUNTEER_ID`, { method: 'POST' })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Donation accepted! Proceed to payment and pickup.');
+                        // Remove donation from dashboard immediately
+                        const li = button.closest('li');
+                        if (li) li.remove();
+                        // Add placeholder if list becomes empty
+                        if (donationList.children.length === 0) {
+                            const placeholder = document.createElement('li');
+                            placeholder.textContent = "No donations available at the moment.";
+                            donationList.appendChild(placeholder);
+                        }
+                    } else {
+                        alert('Failed to accept donation.');
+                    }
+                })
+                .catch(err => alert('Error: ' + err));
+        }
+    </script>
+</body>
+</html>
