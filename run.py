@@ -585,13 +585,11 @@ def get_donation(donation_id: int):
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT d.*, 
-               n.name as ngo_name, n.contact_person, n.phone, n.email,
-               p.id as pickup_id, p.pickup_time, p.delivery_time, p.beneficiaries_count
-        FROM donations d 
-        LEFT JOIN pickups p ON d.id = p.donation_id 
-        LEFT JOIN ngos n ON p.ngo_id = n.id 
-        WHERE d.id = ?
+        SELECT id, restaurant_name, food_type, food_description, quantity, 
+               expiry_hours, photo_url, latitude, longitude, pickup_address, 
+               status, created_at
+        FROM donations 
+        WHERE id = ?
     ''', (donation_id,))
     
     result = cursor.fetchone()
@@ -602,25 +600,17 @@ def get_donation(donation_id: int):
     
     donation = {
         "id": result[0],
-        "donor_name": result[1],
-        "donor_phone": result[2],
-        "food_type": result[3],
+        "restaurant_name": result[1],
+        "food_type": result[2],
+        "food_description": result[3],
         "quantity": result[4],
         "expiry_hours": result[5],
-        "pickup_address": result[6],
+        "photo_url": result[6],
         "latitude": result[7],
         "longitude": result[8],
-        "status": result[9],
-        "created_at": result[10],
-        "photo_path": result[11],
-        "ngo_name": result[12],
-        "contact_person": result[13],
-        "ngo_phone": result[14],
-        "ngo_email": result[15],
-        "pickup_id": result[16],
-        "pickup_time": result[17],
-        "delivery_time": result[18],
-        "beneficiaries_count": result[19]
+        "pickup_address": result[9],
+        "status": result[10],
+        "created_at": result[11]
     }
     
     return donation
