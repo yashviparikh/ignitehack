@@ -94,6 +94,32 @@ class FoodRescueConnectionManager:
         await self.broadcast_to_all(message)
         print(f"📢 Status update: Donation {donation_id} {old_status} → {new_status}")
 
+    async def notify_ngo_allocation(self, ngo_id: int, allocation_data: Dict[str, Any]):
+        """Send allocation notification to specific NGO"""
+        if ngo_id in self.ngo_connections:
+            message_str = json.dumps(allocation_data)
+            disconnected = []
+            
+            for connection in self.ngo_connections[ngo_id]:
+                try:
+                    await connection.send_text(message_str)
+                except Exception:
+                    disconnected.append(connection)
+            
+            # Clean up disconnected connections
+            for connection in disconnected:
+                self.ngo_connections[ngo_id].remove(connection)
+                if connection in self.active_connections:
+                    self.active_connections.remove(connection)
+            
+            # Remove empty NGO connection list
+            if not self.ngo_connections[ngo_id]:
+                del self.ngo_connections[ngo_id]
+                
+            print(f"📋 Sent allocation notification to NGO {ngo_id} ({len(self.ngo_connections.get(ngo_id, []))} connections)")
+        else:
+            print(f"⚠️ NGO {ngo_id} not connected via WebSocket")
+
 # Global WebSocket manager
 websocket_manager = FoodRescueConnectionManager()
 
@@ -397,7 +423,7 @@ async def upload_photo(donation_id: int, file: UploadFile = File(...)):
     return {"photo_url": photo_url}
 
 @app.post("/api/donations/{donation_id}/allocate", response_model=AllocationResponse)
-def allocate_donation(donation_id: int):
+async def allocate_donation(donation_id: int):
     """Allocate a donation to matching NGOs using ML model"""
     try:
         conn = sqlite3.connect('food_rescue.db')
@@ -471,6 +497,37 @@ def allocate_donation(donation_id: int):
                         "distance_km": None
                     })
                     allocation_result["remaining_quantity"] -= allocated
+        
+        # 5. Send real-time notifications to matched NGOs
+        if allocation_result["allocations"]:
+            for allocation in allocation_result["allocations"]:
+                ngo_id = allocation["ngo_id"]
+                ngo_name = allocation["ngo_name"]
+                allocated_quantity = allocation["allocated_quantity"]
+                
+                # Create notification message for the NGO
+                notification_message = {
+                    "type": "new_allocation",
+                    "timestamp": datetime.now().isoformat(),
+                    "data": {
+                        "donation_id": donation_id,
+                        "donation_title": f"{donation_dict['food_type']} from {donation_dict['restaurant_name']}",
+                        "restaurant_name": donation_dict["restaurant_name"],
+                        "food_type": donation_dict["food_type"],
+                        "food_description": donation_dict["food_description"],
+                        "allocated_quantity": allocated_quantity,
+                        "total_quantity": donation_dict["quantity"],
+                        "expiry_hours": donation_dict["expiry_hours"],
+                        "pickup_address": donation_dict["pickup_address"],
+                        "priority_score": allocation["priority_score"],
+                        "distance_km": allocation.get("distance_km"),
+                        "urgent": donation_dict["expiry_hours"] and donation_dict["expiry_hours"] <= 2
+                    }
+                }
+                
+                # Send notification to specific NGO
+                await websocket_manager.notify_ngo_allocation(ngo_id, notification_message)
+                print(f"🔔 Sent allocation notification to NGO {ngo_name} (ID: {ngo_id}) for donation {donation_id}")
         
         return allocation_result
         
