@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Rescue Matchmaker - Wireframe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .wireframe-box {
+            border: 2px dashed #ccc;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .nav-bar {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+        }
+        .role-section {
+            border: 3px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .dashboard-item {
+            background: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .feature-box {
+            background: #e8f6f3;
+            border: 1px solid #48c9b0;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 3px;
+        }
+        .admin-feature {
+            background: #fdf2e9;
+            border: 1px solid #f39c12;
+        }
+        .sitemap {
+            background: #f8f9fa;
+            border: 2px solid #6c757d;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        h1, h2, h3 { color: #2c3e50; }
+        .login-box {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            text-align: center;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .flow-arrow {
+            text-align: center;
+            font-size: 24px;
+            color: #3498db;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-bar">
+            <h1>🍽️ Food Rescue Matchmaker - Application Wireframe</h1>
+            <p>Complete sitemap and user flow visualization</p>
+        </div>
+
+        <!-- Sitemap Overview -->
+        <div class="sitemap">
+            <h2>📋 COMPLETE SITEMAP</h2>
+            <pre>
+🏠 Landing Page
+    └──  Role Selection (Donor/NGO/Admin)
+        └── 🔐 Login/Signup
+            │
+            ├── 🍞 DONOR DASHBOARD
+            │   ├── ➕ Post Donation
+            │   ├── 📋 My Donations
+            │   └── 📊 Impact Stats
+            │
+            ├── 🏢 NGO DASHBOARD  
+            │   ├── 🗺️ Nearby Donations
+            │   ├── ✅ Accept Donation
+            │   ├── 🚚 Live Pickup Map
+            │   └── 📈 Impact Stats
+            │
+            └── ⚙️ ADMIN DASHBOARD
+                ├── 📊 All Donations Table
+                ├── 👥 User Management
+                └── 📈 Analytics Dashboard
+            </pre>
+        </div>
+
+        <!-- Landing & Authentication -->
+        <div class="login-box">
+            <h2>🏠 LANDING PAGE</h2>
+            <div class="wireframe-box">
+                <h3>Hero Section</h3>
+                <p>[LOGO] Food Rescue Matchmaker</p>
+                <p>"Connecting surplus food with those who need it"</p>
+                <p>[Get Started Button] [Learn More]</p>
+            </div>
+            
+            <div class="wireframe-box">
+                <h3>🔐 LOGIN/SIGNUP FORM</h3>
+                <p>📧 Email: [____________]</p>
+                <p>🔒 Password: [____________]</p>
+                <p>[Login] [Register]</p>
+                <p>New user? → Role Selection Required</p>
+            </div>
+        </div>
+
+        <div class="flow-arrow">⬇️ AFTER LOGIN ⬇️</div>
+
+        <!-- Role Selection -->
+        <div class="wireframe-box">
+            <h2>👤 USER ROLE SELECTION</h2>
+            <div style="display: flex; justify-content: space-around; text-align: center;">
+                <div style="border: 2px solid #27ae60; padding: 20px; border-radius: 8px;">
+                    <h3>🍞 DONOR</h3>
+                    <p>I have food to donate</p>
+                    <p>[Select Role]</p>
+                </div>
+                <div style="border: 2px solid #3498db; padding: 20px; border-radius: 8px;">
+                    <h3>🏢 NGO</h3>
+                    <p>I collect donations</p>
+                    <p>[Select Role]</p>
+                </div>
+                <div style="border: 2px solid #e74c3c; padding: 20px; border-radius: 8px;">
+                    <h3>⚙️ ADMIN</h3>
+                    <p>Platform management</p>
+                    <p>[Admin Access]</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-arrow">⬇️ ROLE-BASED DASHBOARDS ⬇️</div>
+
+        <!-- Donor Dashboard -->
+        <div class="role-section">
+            <h2>🍞 DONOR DASHBOARD</h2>
+            
+            <div class="dashboard-item">
+                <h3>➕ POST DONATION</h3>
+                <div class="feature-box">
+                    <strong>Donation Form:</strong>
+                    <p>📝 Food Type: [Dropdown Menu]</p>
+                    <p>📊 Quantity: [Number Input]</p>
+                    <p>⏰ Expiry: [Date/Time Picker]</p>
+                    <p>📷 Photo: [Camera/Upload Button]</p>
+                    <p>📍 Location: [Auto-detect GPS] [Manual Entry]</p>
+                    <p>💬 Notes: [Text Area]</p>
+                    <p>[Submit Donation]</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <h3>📋 MY DONATIONS</h3>
+                <div class="feature-box">
+                    <strong>Donation List View:</strong>
+                    <p>🔄 Status: Posted → Accepted → Picked Up → Completed</p>
+                    <p>📍 Pickup Location with Map</p>
+                    <p>🚚 Live Tracking (when NGO is en route)</p>
+                    <p>⏱️ Estimated pickup time</p>
+                    <p>[View Details] [Cancel] [Mark as Ready]</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <h3>📊 IMPACT STATS</h3>
+                <div class="feature-box">
+                    <strong>Personal Impact Dashboard:</strong>
+                    <p>📈 Total Donations: [Number]</p>
+                    <p>🍽️ Meals Provided: [Chart visualization]</p>
+                    <p>♻️ Food Saved: [Weight/Volume]</p>
+                    <p>🏆 Achievement Badges</p>
+                    <p>📅 Monthly contribution graph</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NGO Dashboard -->
+        <div class="role-section">
+            <h2>🏢 NGO DASHBOARD</h2>
+            
+            <div class="dashboard-item">
+                <h3>🗺️ NEARBY DONATIONS</h3>
+                <div class="feature-box">
+                    <strong>Map/List View:</strong>
+                    <p>🗺️ Interactive map with donation pins</p>
+                    <p>📍 Distance from NGO location</p>
+                    <p>🔍 Filters: Food type, quantity, urgency</p>
+                    <p>📋 List view with sorting options</p>
+                    <p>⏰ Time since posted</p>
+                    <p>[View Details] [Get Directions]</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <h3>✅ ACCEPT DONATION</h3>
+                <div class="feature-box">
+                    <strong>Quick Accept System:</strong>
+                    <p>👀 Donation preview with all details</p>
+                    <p>📷 Photos and location verification</p>
+                    <p>⏱️ ETA input field</p>
+                    <p>👤 Assign volunteer/driver</p>
+                    <p>[Accept & Navigate] [Decline]</p>
+                    <p>📱 Auto-notify donor of acceptance</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <h3>🚚 LIVE PICKUP MAP</h3>
+                <div class="feature-box">
+                    <strong>Active Pickups Tracking:</strong>
+                    <p>🗺️ Real-time map with active routes</p>
+                    <p>📍 Current location of pickup team</p>
+                    <p>🔄 Status updates: En route → Arrived → Loading → Complete</p>
+                    <p>📱 Update pickup status buttons</p>
+                    <p>💬 Chat with donor</p>
+                    <p>📸 Confirmation photos</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item">
+                <h3>📈 IMPACT STATS</h3>
+                <div class="feature-box">
+                    <strong>NGO Impact Dashboard:</strong>
+                    <p>📊 Successful pickups this month</p>
+                    <p>👥 People served estimation</p>
+                    <p>🗺️ Coverage area analysis</p>
+                    <p>⏱️ Average response time</p>
+                    <p>⭐ Donor satisfaction ratings</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard -->
+        <div class="role-section">
+            <h2>⚙️ ADMIN DASHBOARD (Web-Only)</h2>
+            
+            <div class="dashboard-item admin-feature">
+                <h3>📊 ALL DONATIONS TABLE</h3>
+                <div class="feature-box admin-feature">
+                    <strong>Complete System Overview:</strong>
+                    <p>📋 Sortable table: Date, Donor, NGO, Status, Location</p>
+                    <p>🔍 Advanced search and filtering</p>
+                    <p>📈 Status distribution charts</p>
+                    <p>⚠️ Failed pickup alerts</p>
+                    <p>📊 Export data functionality</p>
+                    <p>[View] [Edit] [Delete] [Export CSV]</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item admin-feature">
+                <h3>👥 USER MANAGEMENT</h3>
+                <div class="feature-box admin-feature">
+                    <strong>User Administration:</strong>
+                    <p>👤 User list with roles and status</p>
+                    <p>✅ Verify NGO credentials</p>
+                    <p>🚫 Ban/suspend users</p>
+                    <p>📧 Send notifications/announcements</p>
+                    <p>📊 User activity analytics</p>
+                    <p>[View Profile] [Edit] [Verify] [Suspend]</p>
+                </div>
+            </div>
+
+            <div class="dashboard-item admin-feature">
+                <h3>📈 ANALYTICS DASHBOARD</h3>
+                <div class="feature-box admin-feature">
+                    <strong>Platform Analytics:</strong>
+                    <p>🗺️ Geographic heatmap of activity</p>
+                    <p>📊 Success rate charts</p>
+                    <p>⏱️ Peak usage time analysis</p>
+                    <p>🍽️ Food type distribution</p>
+                    <p>📈 Growth metrics and trends</p>
+                    <p>🎯 System performance KPIs</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Flow -->
+        <div class="wireframe-box">
+            <h2>🧭 NAVIGATION STRUCTURE</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div>
+                    <h4>🍞 Donor Navigation</h4>
+                    <p>• Dashboard Home</p>
+                    <p>• Post New Donation</p>
+                    <p>• My Donations</p>
+                    <p>• Impact Stats</p>
+                    <p>• Profile Settings</p>
+                    <p>• Logout</p>
+                </div>
+                <div>
+                    <h4>🏢 NGO Navigation</h4>
+                    <p>• Dashboard Home</p>
+                    <p>• Find Donations</p>
+                    <p>• Active Pickups</p>
+                    <p>• Impact Reports</p>
+                    <p>• Team Management</p>
+                    <p>• Profile Settings</p>
+                    <p>• Logout</p>
+                </div>
+                <div>
+                    <h4>⚙️ Admin Navigation</h4>
+                    <p>• System Overview</p>
+                    <p>• Donations Management</p>
+                    <p>• User Management</p>
+                    <p>• Analytics</p>
+                    <p>• System Settings</p>
+                    <p>• Reports</p>
+                    <p>• Logout</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Considerations -->
+        <div class="wireframe-box" style="background: #fff3cd; border-color: #ffc107;">
+            <h2>📱 MOBILE-FIRST DESIGN NOTES</h2>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>📲 Mobile Features</h4>
+                    <p>• GPS auto-location</p>
+                    <p>• Camera integration</p>
+                    <p>• Push notifications</p>
+                    <p>• Offline capability</p>
+                    <p>• One-hand navigation</p>
+                    <p>• Quick action buttons</p>
+                </div>
+                <div>
+                    <h4>💻 Responsive Layout</h4>
+                    <p>• Stack cards vertically on mobile</p>
+                    <p>• Collapsible navigation menu</p>
+                    <p>• Touch-friendly buttons</p>
+                    <p>• Swipe gestures</p>
+                    <p>• Simplified forms</p>
+                    <p>• Large map view</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key User Flows -->
+        <div class="wireframe-box" style="background: #d1ecf1; border-color: #bee5eb;">
+            <h2>🔄 KEY USER FLOWS</h2>
+            
+            <h4>Flow 1: Donor Posts Food</h4>
+            <p>Login → Dashboard → Post Donation → Fill Form → Take Photo → GPS Location → Submit → Confirmation</p>
+            
+            <h4>Flow 2: NGO Accepts Donation</h4>
+            <p>Login → Nearby Donations → Map View → Select Donation → View Details → Accept → Set ETA → Navigate</p>
+            
+            <h4>Flow 3: Live Pickup Process</h4>
+            <p>En Route → Update Status → Arrive → Contact Donor → Load Food → Take Confirmation Photo → Complete</p>
+            
+            <h4>Flow 4: Admin Monitoring</h4>
+            <p>Admin Login → System Overview → Check Analytics → Monitor Active Pickups → User Management</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #e8f5e8; border-radius: 8px;">
+            <h3>🎯 WIREFRAME COMPLETE</h3>
+            <p>This wireframe covers the complete application structure with all dashboards, features, and user flows.</p>
+            <p><strong>Ready for development with clear visual hierarchy and navigation patterns.</strong></p>
+        </div>
+    </div>
+</body>
+</html>
