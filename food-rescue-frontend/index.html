@@ -37,6 +37,29 @@
         .notification { padding: 10px; margin: 10px 0; border-radius: 5px; }
         .notification.success { background: #d5f4e6; color: #27ae60; }
         .notification.error { background: #fadbd8; color: #e74c3c; }
+        
+        /* Map embed styles */
+        .map-container { 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: box-shadow 0.3s ease;
+        }
+        .map-container:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .map-container iframe {
+            display: block;
+            border: none;
+        }
+        .location-info {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(5px);
+            border-radius: 6px;
+            padding: 10px;
+            margin: 8px 0;
+            border-left: 4px solid #007bff;
+        }
     </style>
 </head>
 <body>
@@ -191,40 +214,36 @@
                         
                         document.getElementById('location-status').innerHTML = `
                             <div style="background: #e8f5e8; padding: 15px; border-radius: 8px; border: 1px solid #4CAF50;">
-                                <p style="margin: 0 0 10px 0; color: #2e7d32;"><strong>✅ Location Captured Successfully!</strong></p>
+                                <p style="margin: 0 0 10px 0; color: #2e7d32;"><strong>✅ Location Captured!</strong></p>
                                 
                                 <!-- Embedded Google Map -->
-                                <div style="margin: 10px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                <div class="map-container" style="margin: 10px 0;">
                                     <iframe 
-                                        src="https://www.google.com/maps/embed/v1/view?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&center=${lat},${lng}&zoom=16&maptype=roadmap"
                                         width="100%" 
                                         height="200" 
-                                        style="border:0; display: block;" 
-                                        allowfullscreen="" 
-                                        loading="lazy" 
-                                        referrerpolicy="no-referrer-when-downgrade">
+                                        referrerpolicy="no-referrer-when-downgrade" 
+                                        src="https://maps.google.com/maps?q=${lat},${lng}&z=16&output=embed"
+                                        allowfullscreen>
                                     </iframe>
                                 </div>
                                 
-                                <div style="background: rgba(255,255,255,0.9); padding: 8px; border-radius: 4px; margin: 8px 0;">
-                                    <p style="margin: 0; font-size: 0.9em; color: #555;">
-                                        📍 <strong>Coordinates:</strong> ${lat}, ${lng}<br>
-                                        🎯 <strong>Accuracy:</strong> ~${accuracy}m
+                                <div class="location-info">
+                                    <p style="margin: 2px 0; font-size: 0.9em; color: #555;">
+                                        <strong>📍 Coordinates:</strong> ${lat}, ${lng}
+                                    </p>
+                                    <p style="margin: 2px 0; font-size: 0.9em; color: #555;">
+                                        <strong>🎯 Accuracy:</strong> ~${accuracy}m
                                     </p>
                                 </div>
                                 
-                                <div style="margin-top: 10px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                <div style="margin-top: 10px;">
                                     <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank" 
-                                       style="display: inline-block; padding: 6px 12px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-size: 0.85em;">
+                                       style="display: inline-block; padding: 6px 12px; background: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-size: 0.9em; margin-right: 8px;">
                                         🗺️ Open in Maps
                                     </a>
                                     <button type="button" onclick="getLocation()" 
-                                            style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">
+                                            style="padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;">
                                         🔄 Refresh Location
-                                    </button>
-                                    <button type="button" onclick="showLocationFallback()" 
-                                            style="padding: 6px 12px; background: #ff9800; color: white; border: none; border-radius: 4px; font-size: 0.85em; cursor: pointer;">
-                                        ✏️ Enter Manual Address
                                     </button>
                                 </div>
                             </div>
@@ -290,19 +309,36 @@
                 };
                 
                 document.getElementById('location-status').innerHTML = `
-                    <div style="background: #fff3cd; padding: 10px; border-radius: 5px; border: 1px solid #ffc107;">
-                        <p style="margin: 0; color: #856404;"><strong>✅ Manual Address Set!</strong></p>
-                        <p style="margin: 5px 0; font-size: 0.9em; color: #555;">
-                            📍 Address: ${address}<br>
-                            🗺️ Using default coordinates for demo
-                        </p>
-                        <div style="margin-top: 8px;">
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 8px; border: 1px solid #ffc107;">
+                        <p style="margin: 0 0 10px 0; color: #856404;"><strong>✅ Manual Address Set!</strong></p>
+                        
+                        <!-- Map showing demo location -->
+                        <div class="map-container" style="margin: 10px 0;">
+                            <iframe 
+                                width="100%" 
+                                height="180" 
+                                referrerpolicy="no-referrer-when-downgrade" 
+                                src="https://maps.google.com/maps?q=${encodeURIComponent(address)}&z=14&output=embed"
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                        
+                        <div class="location-info">
+                            <p style="margin: 2px 0; font-size: 0.9em; color: #555;">
+                                <strong>📍 Address:</strong> ${address}
+                            </p>
+                            <p style="margin: 2px 0; font-size: 0.8em; color: #666; font-style: italic;">
+                                🗺️ Map shows search result for your address
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 10px;">
                             <button type="button" onclick="getLocation()" 
-                                    style="padding: 4px 8px; background: #2196F3; color: white; border: none; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+                                    style="padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 4px; font-size: 0.9em; cursor: pointer; margin-right: 8px;">
                                 📍 Try GPS Instead
                             </button>
                             <button type="button" onclick="showLocationFallback()" 
-                                    style="margin-left: 5px; padding: 4px 8px; background: #6c757d; color: white; border: none; border-radius: 3px; font-size: 0.8em; cursor: pointer;">
+                                    style="padding: 6px 12px; background: #6c757d; color: white; border: none; border-radius: 4px; font-size: 0.9em; cursor: pointer;">
                                 ✏️ Edit Address
                             </button>
                         </div>
@@ -471,39 +507,28 @@
                     <p><strong>Status:</strong> <span class="status ${donation.status}">${donation.status}</span></p>
                     <p><strong>Posted:</strong> ${new Date(donation.created_at).toLocaleString()}</p>
                     ${donation.photo_url ? `<img src="${donation.photo_url.startsWith('/uploads/') ? 'http://127.0.0.1:8000' + donation.photo_url : API_BASE + donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}
+                    ${donation.pickup_address ? `<p><strong>📍 Address:</strong> ${donation.pickup_address}</p>` : ''}
                     ${donation.latitude ? `
-                        <div style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin: 10px 0; border-left: 4px solid #007bff;">
-                            <p style="margin: 0 0 8px 0; font-size: 0.95em;"><strong>📍 Pickup Location</strong></p>
+                        <div style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #007bff;">
+                            <p style="margin: 0 0 8px 0; font-size: 0.9em;"><strong>📍 Location:</strong> ${donation.latitude.toFixed(4)}, ${donation.longitude.toFixed(4)}</p>
                             
-                            <!-- Embedded Mini Map -->
-                            <div style="margin: 8px 0; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                            <!-- Mini embedded map -->
+                            <div class="map-container" style="margin: 8px 0;">
                                 <iframe 
-                                    src="https://www.google.com/maps/embed/v1/view?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&center=${donation.latitude},${donation.longitude}&zoom=15&maptype=roadmap"
                                     width="100%" 
                                     height="150" 
-                                    style="border:0; display: block;" 
-                                    allowfullscreen="" 
-                                    loading="lazy" 
-                                    referrerpolicy="no-referrer-when-downgrade">
+                                    referrerpolicy="no-referrer-when-downgrade" 
+                                    src="https://maps.google.com/maps?q=${donation.latitude},${donation.longitude}&z=15&output=embed"
+                                    allowfullscreen>
                                 </iframe>
                             </div>
                             
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                                <span style="font-size: 0.85em; color: #666;">
-                                    ${donation.latitude.toFixed(4)}, ${donation.longitude.toFixed(4)}
-                                </span>
-                                <a href="https://www.google.com/maps?q=${donation.latitude},${donation.longitude}" target="_blank" 
-                                   style="padding: 4px 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 0.8em;">
-                                    🗺️ Directions
-                                </a>
-                            </div>
+                            <a href="https://www.google.com/maps?q=${donation.latitude},${donation.longitude}" target="_blank" 
+                               style="display: inline-block; margin-top: 6px; padding: 4px 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; font-size: 0.8em;">
+                                🗺️ Open in Google Maps
+                            </a>
                         </div>
-                    ` : (donation.pickup_address ? `
-                        <div style="background: #fff3cd; padding: 8px; border-radius: 4px; margin: 8px 0; border-left: 3px solid #ffc107;">
-                            <p style="margin: 0; font-size: 0.9em;"><strong>📍 Address:</strong> ${donation.pickup_address}</p>
-                            <p style="margin: 4px 0 0 0; font-size: 0.8em; color: #856404; font-style: italic;">Manual address - no map preview available</p>
-                        </div>
-                    ` : '<p style="color: #6c757d; font-style: italic; margin: 8px 0;">📍 No location provided</p>')}
+                    ` : (donation.pickup_address ? '' : '<p style="color: #6c757d; font-style: italic;">📍 No location provided</p>')}
                     ${!isOwner && donation.status === 'available' ? `<button class="btn" onclick="acceptDonation(${donation.id})">🤝 Accept Donation</button>` : ''}
                     ${isOwner && donation.status !== 'available' ? `<button class="btn btn-secondary" onclick="trackDonation(${donation.id})">📍 Track Status</button>` : ''}
                 `;
