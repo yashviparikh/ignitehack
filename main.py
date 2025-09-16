@@ -1,9 +1,9 @@
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 import sqlite3
 import shutil
@@ -12,9 +12,83 @@ import uuid
 import webbrowser
 import threading
 import time
+import json
+import asyncio
 
 # Create FastAPI app
 app = FastAPI(title="Food Rescue Matchmaker API", version="1.0.0")
+
+# WebSocket Connection Manager
+class FoodRescueConnectionManager:
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+        self.ngo_connections: Dict[int, List[WebSocket]] = {}
+        self.donor_connections: List[WebSocket] = []
+        
+    async def connect(self, websocket: WebSocket, connection_type: str = "general", ngo_id: int = None):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+        
+        if connection_type == "ngo" and ngo_id:
+            if ngo_id not in self.ngo_connections:
+                self.ngo_connections[ngo_id] = []
+            self.ngo_connections[ngo_id].append(websocket)
+        elif connection_type == "donor":
+            self.donor_connections.append(websocket)
+            
+        print(f"🔌 WebSocket connected: {connection_type}")
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        if websocket in self.donor_connections:
+            self.donor_connections.remove(websocket)
+        for ngo_id, connections in list(self.ngo_connections.items()):
+            if websocket in connections:
+                connections.remove(websocket)
+                if not connections:
+                    del self.ngo_connections[ngo_id]
+        print(f"🔌 WebSocket disconnected")
+
+    async def broadcast_to_all(self, message: Dict[str, Any]):
+        if not self.active_connections:
+            return
+        message_str = json.dumps(message)
+        disconnected = []
+        
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(message_str)
+            except Exception:
+                disconnected.append(connection)
+        
+        for connection in disconnected:
+            self.disconnect(connection)
+
+    async def notify_new_donation(self, donation_data: Dict[str, Any]):
+        message = {
+            "type": "new_donation",
+            "timestamp": datetime.now().isoformat(),
+            "data": donation_data
+        }
+        await self.broadcast_to_all(message)
+        print(f"📢 Notified about new donation: {donation_data.get('restaurant_name')}")
+
+    async def notify_status_update(self, donation_id: int, old_status: str, new_status: str):
+        message = {
+            "type": "status_update",
+            "timestamp": datetime.now().isoformat(),
+            "data": {
+                "donation_id": donation_id,
+                "old_status": old_status,
+                "new_status": new_status
+            }
+        }
+        await self.broadcast_to_all(message)
+        print(f"📢 Status update: Donation {donation_id} {old_status} → {new_status}")
+
+# Global WebSocket manager
+websocket_manager = FoodRescueConnectionManager()
 
 # CORS middleware
 app.add_middleware(
@@ -143,7 +217,7 @@ def health_check():
     return {"message": "Food Rescue Matchmaker API is running!", "status": "success"}
 
 @app.post("/api/donations/")
-def create_donation(donation: DonationCreate):
+async def create_donation(donation: DonationCreate):
     try:
         conn = sqlite3.connect('food_rescue.db')
         cursor = conn.cursor()
@@ -161,6 +235,21 @@ def create_donation(donation: DonationCreate):
         donation_id = cursor.lastrowid
         conn.commit()
         conn.close()
+        
+        # Broadcast new donation to all connected clients
+        await websocket_manager.notify_new_donation({
+            "id": donation_id,
+            "restaurant_name": donation.restaurant_name,
+            "food_type": food_type,
+            "food_description": donation.food_description,
+            "quantity": donation.quantity,
+            "expiry_hours": expiry_hours,
+            "latitude": donation.latitude,
+            "longitude": donation.longitude,
+            "pickup_address": donation.pickup_address,
+            "status": "available",
+            "created_at": datetime.now().isoformat()
+        })
         
         return {"id": donation_id, "message": "Donation created successfully"}
     
@@ -257,7 +346,7 @@ def get_ngos():
     return ngos
 
 @app.post("/api/pickups/")
-def create_pickup(pickup: PickupCreate):
+async def create_pickup(pickup: PickupCreate):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
     
@@ -286,10 +375,13 @@ def create_pickup(pickup: PickupCreate):
     conn.commit()
     conn.close()
     
+    # Broadcast status update
+    await websocket_manager.notify_status_update(pickup.donation_id, "available", "accepted")
+    
     return {"id": pickup_id, "message": "Pickup created successfully"}
 
 @app.patch("/pickups/{pickup_id}")
-def update_pickup(pickup_id: int, status: str, beneficiaries_count: Optional[int] = None):
+async def update_pickup(pickup_id: int, status: str, beneficiaries_count: Optional[int] = None):
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
     
@@ -305,21 +397,32 @@ def update_pickup(pickup_id: int, status: str, beneficiaries_count: Optional[int
     
     donation_id = result[0]
     
+    # Get current status for broadcasting
+    cursor.execute('SELECT status FROM donations WHERE id = ?', (donation_id,))
+    old_status = cursor.fetchone()[0]
+    
     # Update pickup
     if beneficiaries_count is not None:
         cursor.execute('UPDATE pickups SET beneficiaries_count = ? WHERE id = ?', 
                       (beneficiaries_count, pickup_id))
     
     # Update timestamps and donation status
+    new_status = old_status
     if status == "picked_up":
         cursor.execute('UPDATE pickups SET pickup_time = CURRENT_TIMESTAMP WHERE id = ?', (pickup_id,))
         cursor.execute('UPDATE donations SET status = ? WHERE id = ?', ('picked_up', donation_id))
+        new_status = "picked_up"
     elif status == "delivered":
         cursor.execute('UPDATE pickups SET delivery_time = CURRENT_TIMESTAMP WHERE id = ?', (pickup_id,))
         cursor.execute('UPDATE donations SET status = ? WHERE id = ?', ('delivered', donation_id))
+        new_status = "delivered"
     
     conn.commit()
     conn.close()
+    
+    # Broadcast status update if status changed
+    if new_status != old_status:
+        await websocket_manager.notify_status_update(donation_id, old_status, new_status)
     
     return {"message": f"Pickup updated to {status}"}
 
@@ -431,6 +534,69 @@ def get_statistics():
         "active_ngos": active_ngos,
         "waste_prevented_kg": delivered_donations * 2.5
     }
+
+# WEBSOCKET ENDPOINTS
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    """General WebSocket endpoint for real-time updates"""
+    await websocket_manager.connect(websocket, "general")
+    try:
+        while True:
+            # Keep connection alive and handle incoming messages
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                # Echo back for heartbeat/testing
+                if message.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+            except json.JSONDecodeError:
+                pass  # Ignore invalid JSON
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.websocket("/ws/ngo/{ngo_id}")
+async def ngo_websocket_endpoint(websocket: WebSocket, ngo_id: int):
+    """NGO-specific WebSocket endpoint"""
+    await websocket_manager.connect(websocket, "ngo", ngo_id)
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                if message.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+            except json.JSONDecodeError:
+                pass
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.websocket("/ws/donor")
+async def donor_websocket_endpoint(websocket: WebSocket):
+    """Donor-specific WebSocket endpoint"""
+    await websocket_manager.connect(websocket, "donor")
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                message = json.loads(data)
+                if message.get("type") == "ping":
+                    await websocket.send_text(json.dumps({"type": "pong", "timestamp": datetime.now().isoformat()}))
+            except json.JSONDecodeError:
+                pass
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.get("/api/ws/stats")
+def get_websocket_stats():
+    """Get WebSocket connection statistics"""
+    stats = {
+        "total_connections": len(websocket_manager.active_connections),
+        "ngo_connections": len(websocket_manager.ngo_connections),
+        "donor_connections": len(websocket_manager.donor_connections),
+        "connected_ngos": list(websocket_manager.ngo_connections.keys())
+    }
+    return stats
 
 if __name__ == "__main__":
     import uvicorn

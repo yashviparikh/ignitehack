@@ -192,6 +192,128 @@
         const API_BASE = 'http://127.0.0.1:8000/api';
         let currentNGO = null;
         let currentLocation = null;
+        
+        // WebSocket connection for real-time updates
+        let websocket = null;
+        let reconnectAttempts = 0;
+        const maxReconnectAttempts = 5;
+        let reconnectTimeout = null;
+
+        // Initialize WebSocket connection (completely silent and transparent)
+        function initWebSocket() {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${wsProtocol}//127.0.0.1:8000/ws`;
+            
+            try {
+                websocket = new WebSocket(wsUrl);
+                
+                websocket.onopen = function(event) {
+                    console.log('🔌 Real-time updates enabled');
+                    reconnectAttempts = 0;
+                    
+                    // Clear any pending reconnect timeout
+                    if (reconnectTimeout) {
+                        clearTimeout(reconnectTimeout);
+                        reconnectTimeout = null;
+                    }
+                };
+                
+                websocket.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (error) {
+                        console.error('❌ Error parsing message:', error);
+                    }
+                };
+                
+                websocket.onclose = function(event) {
+                    console.log('🔌 Connection lost, attempting reconnect...');
+                    websocket = null;
+                    
+                    // Silent reconnection attempts
+                    if (reconnectAttempts < maxReconnectAttempts) {
+                        reconnectAttempts++;
+                        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                        
+                        console.log(`🔄 Reconnecting in ${delay/1000}s (attempt ${reconnectAttempts})`);
+                        reconnectTimeout = setTimeout(initWebSocket, delay);
+                    } else {
+                        console.log('❌ Falling back to polling mode');
+                        // Fall back to regular polling silently
+                    }
+                };
+                
+                websocket.onerror = function(error) {
+                    console.error('❌ Connection error:', error);
+                };
+                
+            } catch (error) {
+                console.error('❌ WebSocket unavailable, using polling mode');
+            }
+        }
+
+        // Handle incoming messages (completely transparent to user)
+        function handleWebSocketMessage(message) {
+            console.log('📨 Live update received:', message.type);
+            
+            switch (message.type) {
+                case 'new_donation':
+                    handleNewDonationSilent(message.data);
+                    break;
+                case 'donation_accepted':
+                    handleDonationAcceptedSilent(message.data);
+                    break;
+                case 'status_update':
+                    handleStatusUpdateSilent(message.data);
+                    break;
+                case 'pickup_update':
+                    handlePickupUpdateSilent(message.data);
+                    break;
+            }
+        }
+
+        // Silent handlers - just refresh data without notifications
+        function handleNewDonationSilent(data) {
+            // Refresh available donations silently
+            const activeDashboard = document.querySelector('.dashboard.active').id;
+            if (activeDashboard === 'ngo-dashboard') {
+                loadAvailableDonations();
+            }
+            if (activeDashboard === 'impact-dashboard') {
+                loadImpactData();
+            }
+        }
+
+        function handleDonationAcceptedSilent(data) {
+            // Refresh current view silently
+            const activeDashboard = document.querySelector('.dashboard.active').id;
+            if (activeDashboard === 'donor-dashboard') {
+                loadMyDonations();
+            } else if (activeDashboard === 'ngo-dashboard') {
+                loadAvailableDonations();
+            }
+        }
+
+        function handleStatusUpdateSilent(data) {
+            // Refresh all relevant views silently
+            const activeDashboard = document.querySelector('.dashboard.active').id;
+            if (activeDashboard === 'donor-dashboard') {
+                loadMyDonations();
+            } else if (activeDashboard === 'ngo-dashboard') {
+                loadAvailableDonations();
+            } else if (activeDashboard === 'impact-dashboard') {
+                loadImpactData();
+            }
+        }
+
+        function handlePickupUpdateSilent(data) {
+            // Refresh impact dashboard silently
+            const activeDashboard = document.querySelector('.dashboard.active').id;
+            if (activeDashboard === 'impact-dashboard') {
+                loadImpactData();
+            }
+        }
 
         // Date formatting utility
         function formatDate(dateString) {
@@ -528,6 +650,8 @@
                     document.getElementById('location-status').textContent = '';
                     currentLocation = null;
                     loadMyDonations();
+                    
+                    // WebSocket will handle real-time notifications to NGOs
                 } else {
                     const errorText = await response.text();
                     console.error('Server error:', errorText);
@@ -668,7 +792,7 @@
 
                 if (response.ok) {
                     showNotification('Donation accepted! You can now arrange pickup.');
-                    loadAvailableDonations();
+                    // WebSocket will handle instant updates automatically
                 } else {
                     showNotification('Error accepting donation', 'error');
                 }
@@ -728,17 +852,32 @@
 
         // Initialize app
         window.addEventListener('load', () => {
+            // Silently initialize WebSocket for instant updates
+            initWebSocket();
+            
+            // Load initial data
             loadMyDonations();
             loadImpactData();
         });
 
-        // Auto-refresh every 30 seconds
+        // Reduced auto-refresh interval (WebSocket handles most updates)
         setInterval(() => {
-            const activeDashboard = document.querySelector('.dashboard.active').id;
-            if (activeDashboard === 'donor-dashboard') loadMyDonations();
-            if (activeDashboard === 'ngo-dashboard') loadAvailableDonations();
-            if (activeDashboard === 'impact-dashboard') loadImpactData();
+            // Only refresh if WebSocket is not connected (fallback mode)
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                console.log('📡 Using fallback polling mode');
+                const activeDashboard = document.querySelector('.dashboard.active').id;
+                if (activeDashboard === 'donor-dashboard') loadMyDonations();
+                if (activeDashboard === 'ngo-dashboard') loadAvailableDonations();
+                if (activeDashboard === 'impact-dashboard') loadImpactData();
+            }
         }, 30000);
+
+        // Cleanup WebSocket connection when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (websocket) {
+                websocket.close();
+            }
+        });
     </script>
 </body>
 </html>

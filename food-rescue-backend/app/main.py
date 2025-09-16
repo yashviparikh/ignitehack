@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -7,9 +7,11 @@ import shutil
 import os
 from datetime import datetime
 import uuid
+import json
 
 from .database import get_db, create_tables, Donation, NGO, Pickup
 from .schemas import DonationCreate, DonationResponse, NGOCreate, NGOResponse, PickupCreate, PickupUpdate, PickupResponse
+from .websocket_manager import websocket_manager
 
 # Create FastAPI app
 app = FastAPI(title="Food Rescue Matchmaker API", version="1.0.0")
@@ -17,7 +19,7 @@ app = FastAPI(title="Food Rescue Matchmaker API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:8000", "http://127.0.0.1:8000", "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,12 +41,28 @@ def read_root():
 # DONATION ENDPOINTS
 
 @app.post("/donations/", response_model=DonationResponse)
-def create_donation(donation: DonationCreate, db: Session = Depends(get_db)):
+async def create_donation(donation: DonationCreate, db: Session = Depends(get_db)):
     """Create a new food donation"""
     db_donation = Donation(**donation.dict())
     db.add(db_donation)
     db.commit()
     db.refresh(db_donation)
+    
+    # Convert SQLAlchemy object to dict for WebSocket notification
+    donation_data = {
+        "id": db_donation.id,
+        "restaurant_name": db_donation.restaurant_name,
+        "food_description": db_donation.food_description,
+        "quantity": db_donation.quantity,
+        "latitude": db_donation.latitude,
+        "longitude": db_donation.longitude,
+        "status": db_donation.status,
+        "created_at": db_donation.created_at.isoformat() if db_donation.created_at else None
+    }
+    
+    # Notify all NGOs about new donation via WebSocket
+    await websocket_manager.notify_new_donation(donation_data)
+    
     return db_donation
 
 @app.get("/donations/", response_model=List[DonationResponse])
@@ -65,14 +83,19 @@ def get_donation(donation_id: int, db: Session = Depends(get_db)):
     return donation
 
 @app.patch("/donations/{donation_id}/status")
-def update_donation_status(donation_id: int, status: str, db: Session = Depends(get_db)):
+async def update_donation_status(donation_id: int, status: str, db: Session = Depends(get_db)):
     """Update donation status"""
     donation = db.query(Donation).filter(Donation.id == donation_id).first()
     if not donation:
         raise HTTPException(status_code=404, detail="Donation not found")
     
+    old_status = donation.status
     donation.status = status
     db.commit()
+    
+    # Notify all clients about status update via WebSocket
+    await websocket_manager.notify_status_update(donation_id, old_status, status)
+    
     return {"message": f"Donation status updated to {status}"}
 
 @app.post("/donations/{donation_id}/upload-photo")
@@ -116,7 +139,7 @@ def get_ngos(db: Session = Depends(get_db)):
 # PICKUP ENDPOINTS
 
 @app.post("/pickups/", response_model=PickupResponse)
-def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
+async def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
     """NGO accepts a donation (creates pickup)"""
     # Check if donation exists and is available
     donation = db.query(Donation).filter(Donation.id == pickup.donation_id).first()
@@ -124,6 +147,10 @@ def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Donation not found")
     if donation.status != "available":
         raise HTTPException(status_code=400, detail="Donation is not available")
+    
+    # Get NGO name for notification
+    ngo = db.query(NGO).filter(NGO.id == pickup.ngo_id).first()
+    ngo_name = ngo.name if ngo else "Unknown NGO"
     
     # Create pickup record
     db_pickup = Pickup(**pickup.dict(), pickup_time=datetime.utcnow())
@@ -134,14 +161,22 @@ def create_pickup(pickup: PickupCreate, db: Session = Depends(get_db)):
     
     db.commit()
     db.refresh(db_pickup)
+    
+    # Notify all clients about donation acceptance via WebSocket
+    await websocket_manager.notify_donation_accepted(pickup.donation_id, pickup.ngo_id, ngo_name)
+    
     return db_pickup
 
 @app.patch("/pickups/{pickup_id}")
-def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session = Depends(get_db)):
+async def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session = Depends(get_db)):
     """Update pickup status (picked_up, delivered)"""
     pickup = db.query(Pickup).filter(Pickup.id == pickup_id).first()
     if not pickup:
         raise HTTPException(status_code=404, detail="Pickup not found")
+    
+    # Get NGO name for notification
+    ngo = db.query(NGO).filter(NGO.id == pickup.ngo_id).first()
+    ngo_name = ngo.name if ngo else "Unknown NGO"
     
     # Update pickup
     if update.beneficiaries_count is not None:
@@ -149,6 +184,8 @@ def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session = Dep
     
     # Update donation status and pickup timestamps
     donation = pickup.donation
+    old_status = donation.status
+    
     if update.status == "picked_up":
         donation.status = "picked_up"
         pickup.pickup_time = datetime.utcnow()
@@ -157,6 +194,19 @@ def update_pickup_status(pickup_id: int, update: PickupUpdate, db: Session = Dep
         pickup.delivery_time = datetime.utcnow()
     
     db.commit()
+    
+    # Notify all clients about pickup status update via WebSocket
+    pickup_data = {
+        "pickup_id": pickup_id,
+        "donation_id": pickup.donation_id,
+        "ngo_id": pickup.ngo_id,
+        "ngo_name": ngo_name,
+        "status": update.status,
+        "beneficiaries_count": pickup.beneficiaries_count
+    }
+    await websocket_manager.notify_pickup_update(pickup_data)
+    await websocket_manager.notify_status_update(pickup.donation_id, old_status, donation.status, ngo_name)
+    
     return {"message": f"Pickup updated to {update.status}"}
 
 @app.get("/pickups/", response_model=List[PickupResponse])
@@ -188,3 +238,43 @@ def get_statistics(db: Session = Depends(get_db)):
         "active_ngos": active_ngos,
         "waste_prevented_kg": delivered_donations * 2.5  # Estimate 2.5kg per donation
     }
+
+# WEBSOCKET ENDPOINTS
+
+@app.websocket("/ws/general")
+async def websocket_general_endpoint(websocket: WebSocket):
+    """General WebSocket endpoint for all real-time updates"""
+    await websocket_manager.connect(websocket, "general")
+    try:
+        while True:
+            # Keep connection alive and listen for client messages
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.websocket("/ws/ngo/{ngo_id}")
+async def websocket_ngo_endpoint(websocket: WebSocket, ngo_id: int):
+    """NGO-specific WebSocket endpoint for targeted notifications"""
+    await websocket_manager.connect(websocket, "ngo", ngo_id)
+    try:
+        while True:
+            # Keep connection alive and listen for client messages
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.websocket("/ws/donor")
+async def websocket_donor_endpoint(websocket: WebSocket):
+    """Donor-specific WebSocket endpoint for donation status updates"""
+    await websocket_manager.connect(websocket, "donor")
+    try:
+        while True:
+            # Keep connection alive and listen for client messages
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        websocket_manager.disconnect(websocket)
+
+@app.get("/api/websocket/stats")
+def get_websocket_stats():
+    """Get WebSocket connection statistics"""
+    return websocket_manager.get_connection_stats()
