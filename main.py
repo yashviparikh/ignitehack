@@ -30,7 +30,12 @@ os.makedirs("uploads", exist_ok=True)
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Serve the frontend
-app.mount("/static", StaticFiles(directory="food-rescue-frontend"), name="static")
+# Mount static files for frontend
+app.mount("/food-rescue-frontend", StaticFiles(directory="food-rescue-frontend"), name="frontend")
+
+# Mount uploads directory for serving uploaded images
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # Root route serves the main HTML file
 @app.get("/")
@@ -52,6 +57,7 @@ def init_db():
             photo_url TEXT,
             latitude REAL,
             longitude REAL,
+            pickup_address TEXT,
             status TEXT DEFAULT 'available',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
@@ -102,6 +108,7 @@ class DonationCreate(BaseModel):
     quantity: int
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    pickup_address: Optional[str] = None
 
 class NGOCreate(BaseModel):
     name: str
@@ -115,11 +122,6 @@ class PickupCreate(BaseModel):
 
 # API Endpoints
 
-# Root route serves the main HTML file
-@app.get("/")
-def serve_frontend():
-    return FileResponse("food-rescue-frontend/index.html")
-
 # Health check - API endpoint
 @app.get("/api/health")
 def health_check():
@@ -131,10 +133,10 @@ def create_donation(donation: DonationCreate):
     cursor = conn.cursor()
     
     cursor.execute('''
-        INSERT INTO donations (restaurant_name, food_description, quantity, latitude, longitude)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO donations (restaurant_name, food_description, quantity, latitude, longitude, pickup_address)
+        VALUES (?, ?, ?, ?, ?, ?)
     ''', (donation.restaurant_name, donation.food_description, donation.quantity, 
-          donation.latitude, donation.longitude))
+          donation.latitude, donation.longitude, donation.pickup_address))
     
     donation_id = cursor.lastrowid
     conn.commit()

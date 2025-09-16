@@ -176,7 +176,7 @@
         // Geolocation
         function getLocation() {
             if (navigator.geolocation) {
-                document.getElementById('location-status').textContent = 'Getting location...';
+                document.getElementById('location-status').textContent = '📍 Getting location...';
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         currentLocation = {
@@ -184,15 +184,75 @@
                             longitude: position.coords.longitude
                         };
                         document.getElementById('location-status').textContent = '✅ Location captured';
+                        console.log('Location captured:', currentLocation);
                     },
                     (error) => {
-                        document.getElementById('location-status').textContent = '❌ Location failed';
-                        console.error('Geolocation error:', error);
+                        let errorMessage = 'Location failed';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Location permission denied. You can still post donations without GPS.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Location unavailable. You can still post donations.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Location timeout. You can still post donations.';
+                                break;
+                            default:
+                                errorMessage = 'Location error. You can still post donations.';
+                                break;
+                        }
+                        document.getElementById('location-status').textContent = '⚠️ ' + errorMessage;
+                        console.log('Geolocation error:', error);
+                        
+                        // Provide manual location option
+                        showLocationFallback();
+                    },
+                    {
+                        enableHighAccuracy: false, // Less strict for better compatibility
+                        timeout: 5000, // Shorter timeout
+                        maximumAge: 600000 // 10 minutes cache
                     }
                 );
             } else {
-                showNotification('Geolocation not supported', 'error');
+                document.getElementById('location-status').textContent = '❌ Geolocation not supported';
+                showLocationFallback();
             }
+        }
+
+        // Show manual location input as fallback
+        function showLocationFallback() {
+            const locationStatus = document.getElementById('location-status');
+            locationStatus.innerHTML = `
+                <div style="margin-top: 10px;">
+                    <p style="margin: 5px 0;">⚠️ GPS not available. Enter location manually (optional):</p>
+                    <input type="text" id="manual-address" placeholder="e.g., 123 Main St, City" style="width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 4px;">
+                    <button type="button" onclick="useManualLocation()" style="padding: 6px 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Use This Address</button>
+                    <button type="button" onclick="skipLocation()" style="padding: 6px 12px; background: #95a5a6; color: white; border: none; border-radius: 4px; cursor: pointer;">Skip Location</button>
+                </div>
+            `;
+        }
+
+        // Use manual location
+        function useManualLocation() {
+            const address = document.getElementById('manual-address').value.trim();
+            if (address) {
+                // For demo purposes, we'll use a default coordinate for manual addresses
+                currentLocation = {
+                    latitude: 40.7128, // Default to NYC coordinates
+                    longitude: -74.0060,
+                    manual_address: address
+                };
+                document.getElementById('location-status').innerHTML = `✅ Using address: ${address}`;
+            } else {
+                showNotification('Please enter an address or skip location', 'error');
+            }
+        }
+
+        // Skip location entirely
+        function skipLocation() {
+            currentLocation = null;
+            document.getElementById('location-status').innerHTML = `ℹ️ Location skipped - donations will not include GPS coordinates`;
         }
 
         // Photo upload
@@ -216,8 +276,9 @@
                 restaurant_name: document.getElementById('restaurant-name').value,
                 food_description: document.getElementById('food-description').value,
                 quantity: parseInt(document.getElementById('quantity').value),
-                latitude: currentLocation?.latitude,
-                longitude: currentLocation?.longitude
+                latitude: currentLocation?.latitude || null,
+                longitude: currentLocation?.longitude || null,
+                pickup_address: currentLocation?.manual_address || document.getElementById('restaurant-name').value || 'Address not provided'
             };
 
             try {
@@ -332,7 +393,7 @@
                     <p><strong>Quantity:</strong> ${donation.quantity} servings</p>
                     <p><strong>Status:</strong> <span class="status ${donation.status}">${donation.status}</span></p>
                     <p><strong>Posted:</strong> ${new Date(donation.created_at).toLocaleString()}</p>
-                    ${donation.photo_url ? `<img src="${API_BASE}${donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}
+                    ${donation.photo_url ? `<img src="${donation.photo_url.startsWith('/uploads/') ? 'http://127.0.0.1:8000' + donation.photo_url : API_BASE + donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}
                     ${donation.latitude ? `<p><strong>Location:</strong> ${donation.latitude.toFixed(4)}, ${donation.longitude.toFixed(4)}</p>` : ''}
                     ${!isOwner && donation.status === 'available' ? `<button class="btn" onclick="acceptDonation(${donation.id})">🤝 Accept Donation</button>` : ''}
                     ${isOwner && donation.status !== 'available' ? `<button class="btn btn-secondary" onclick="trackDonation(${donation.id})">📍 Track Status</button>` : ''}
