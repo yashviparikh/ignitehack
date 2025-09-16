@@ -358,7 +358,9 @@ class FoodRescueQuickTest:
                     if response.status == 200:
                         ngo = await response.json()
                         created_ngos.append(ngo)
-                        self.log(f"Created test NGO: {ngo['name']} (ID: {ngo['id']})", "INFO")
+                        ngo_name = ngo.get('name', ngo_data.get('name', 'Unknown NGO'))
+                        ngo_id = ngo.get('id', 'Unknown ID')
+                        self.log(f"Created test NGO: {ngo_name} (ID: {ngo_id})", "INFO")
             
             # Now test the ML allocation endpoint
             self.log("Triggering ML allocation...", "INFO")
@@ -395,8 +397,11 @@ class FoodRescueQuickTest:
                             reliability = allocation.get('reliability', 0)
                             method_used = allocation.get('allocation_method', 'Unknown')
                             
+                            # Handle None values for formatting
+                            distance_str = f"{distance:.2f}" if distance is not None else "N/A"
+                            
                             self.log(f"  {i}. {ngo_name}: {allocated_qty} units", "INFO")
-                            self.log(f"     Score: {priority_score:.2f} | Distance: {distance:.2f}km | Method: {method_used}", "INFO")
+                            self.log(f"     Score: {priority_score:.2f} | Distance: {distance_str}km | Method: {method_used}", "INFO")
                         
                         # Check if ML model was actually used
                         ml_used = any(alloc.get('allocation_method') == 'ML' for alloc in allocations)

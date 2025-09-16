@@ -119,7 +119,7 @@ def match_partial_split(donation: Dict, ngos: List[Dict], ml_model) -> Tuple[Lis
         if allocated_amount > 0:
             allocation_entry = {
                 "ngo_id": ngo["id"],
-                "ngo_name": ngo["name"],
+                "ngo_name": ngo.get("name", "Unknown NGO"),  # Use .get() to handle missing name
                 "allocated_quantity": allocated_amount,
                 "priority_score": round(ngo_data["ml_score"], 3),
                 "distance_km": round(ngo_data["distance"], 2),

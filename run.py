@@ -287,11 +287,17 @@ class AllocationItem(BaseModel):
     allocated_quantity: int
     priority_score: float
     distance_km: Optional[float] = None
+    reliability: Optional[float] = 0.8
+    capacity: Optional[int] = 100
+    allocation_method: Optional[str] = "Unknown"
 
 class AllocationResponse(BaseModel):
     donation_id: int
     allocations: List[AllocationItem]
     remaining_quantity: int
+    allocation_method: Optional[str] = "Unknown"
+    total_allocated: Optional[int] = 0
+    ngos_matched: Optional[int] = 0
 
 # API Endpoints
 
@@ -468,9 +474,15 @@ async def allocate_donation(donation_id: int):
         
         # 4. Call ML allocation (fallback to rule-based if import fails)
         try:
+            print("🔍 Attempting ML allocation...")
             allocation_result = get_allocation(donation_dict, ngos_list)
+            print("✅ ML allocation successful!")
+            print(f"🔧 ML allocation result keys: {list(allocation_result.keys())}")
         except Exception as e:
-            print(f"ML allocation failed, using simple rule-based allocation: {e}")
+            print(f"❌ ML allocation failed, using simple rule-based allocation: {e}")
+            print(f"📊 Error type: {type(e).__name__}")
+            import traceback
+            print(f"📋 Full error: {traceback.format_exc()}")
             # Simple rule-based fallback
             allocation_result = {
                 "donation_id": donation_id,

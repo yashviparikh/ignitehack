@@ -76,11 +76,15 @@ class AllocationItem(BaseModel):
     ngo_name: str
     allocated_quantity: int
     priority_score: float
-    distance_km: float
+    distance_km: Optional[float] = None
     reliability: float
     capacity: int
+    allocation_method: Optional[str] = "Unknown"
 
 class AllocationResponse(BaseModel):
     donation_id: int
     allocations: list[AllocationItem]
     remaining_quantity: int
+    allocation_method: Optional[str] = "Unknown"
+    total_allocated: Optional[int] = 0
+    ngos_matched: Optional[int] = 0

@@ -34,6 +34,7 @@ def get_allocation(donation, ngos):
     """
     print(f"🍽️ Processing allocation for donation {donation['id']}: {donation['food_type']} ({donation['quantity']} units)")
     print(f"📍 Available NGOs: {len(ngos)}")
+    print("🔧 DEBUG: Using UPDATED allocation.py function with additional fields")
     
     allocations, remaining = match_partial_split(donation, ngos, ml_model)
     
