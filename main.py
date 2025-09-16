@@ -478,11 +478,11 @@ def get_pickups():
     cursor = conn.cursor()
     
     cursor.execute('''
-        SELECT p.*, d.donor_name, d.food_type, d.quantity, d.pickup_address, n.name as ngo_name
+        SELECT p.*, d.restaurant_name, d.food_type, d.quantity, d.pickup_address, n.name as ngo_name
         FROM pickups p
         JOIN donations d ON p.donation_id = d.id
         JOIN ngos n ON p.ngo_id = n.id
-        ORDER BY p.created_at DESC
+        ORDER BY p.pickup_time DESC
     ''')
     
     pickups = []
@@ -493,13 +493,12 @@ def get_pickups():
             "ngo_id": row[2],
             "pickup_time": row[3],
             "delivery_time": row[4],
-            "created_at": row[5],
-            "beneficiaries_count": row[6],
-            "donor_name": row[7],
-            "food_type": row[8],
-            "quantity": row[9],
-            "pickup_address": row[10],
-            "ngo_name": row[11]
+            "beneficiaries_count": row[5],
+            "restaurant_name": row[6],  # Changed from donor_name
+            "food_type": row[7],
+            "quantity": row[8],
+            "pickup_address": row[9],
+            "ngo_name": row[10]
         }
         pickups.append(pickup)
     
