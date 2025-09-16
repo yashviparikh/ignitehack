@@ -36,12 +36,23 @@ class FoodRescueConnectionManager:
         await websocket.accept()
         self.active_connections.append(websocket)
         
+        print(f"\n🔌 WEBSOCKET CONNECTION DEBUG")
+        print(f"📝 Connection type: {connection_type}")
+        print(f"🆔 NGO ID: {ngo_id}")
+        print(f"📊 Total active connections: {len(self.active_connections)}")
+        
         if connection_type == "ngo" and ngo_id:
             if ngo_id not in self.ngo_connections:
                 self.ngo_connections[ngo_id] = []
+                print(f"🆕 Created new connection list for NGO {ngo_id}")
             self.ngo_connections[ngo_id].append(websocket)
+            print(f"✅ Added NGO {ngo_id} connection (total for this NGO: {len(self.ngo_connections[ngo_id])})")
         elif connection_type == "donor":
             self.donor_connections.append(websocket)
+            print(f"✅ Added donor connection (total donors: {len(self.donor_connections)})")
+        
+        print(f"📋 Current NGO connections: {[(ngo_id, len(conns)) for ngo_id, conns in self.ngo_connections.items()]}")
+        print(f"🔌 WEBSOCKET CONNECTION DEBUG END\n")
             
         print(f"🔌 WebSocket connected: {connection_type}")
 
@@ -96,14 +107,28 @@ class FoodRescueConnectionManager:
 
     async def notify_ngo_allocation(self, ngo_id: int, allocation_data: Dict[str, Any]):
         """Send allocation notification to specific NGO"""
+        print(f"\n🔔 NOTIFICATION DEBUG - Starting notification for NGO {ngo_id}")
+        print(f"📊 Total NGO connections: {list(self.ngo_connections.keys())}")
+        print(f"💾 Allocation data: {allocation_data}")
+        
         if ngo_id in self.ngo_connections:
-            message_str = json.dumps(allocation_data)
-            disconnected = []
+            connections_count = len(self.ngo_connections[ngo_id])
+            print(f"✅ NGO {ngo_id} found with {connections_count} active connections")
             
-            for connection in self.ngo_connections[ngo_id]:
+            message_str = json.dumps(allocation_data)
+            print(f"📝 Message to send: {message_str}")
+            
+            disconnected = []
+            sent_count = 0
+            
+            for i, connection in enumerate(self.ngo_connections[ngo_id]):
                 try:
+                    print(f"📤 Sending to connection {i+1}/{connections_count} for NGO {ngo_id}")
                     await connection.send_text(message_str)
-                except Exception:
+                    sent_count += 1
+                    print(f"✅ Successfully sent to connection {i+1}")
+                except Exception as e:
+                    print(f"❌ Failed to send to connection {i+1}: {e}")
                     disconnected.append(connection)
             
             # Clean up disconnected connections
@@ -115,10 +140,15 @@ class FoodRescueConnectionManager:
             # Remove empty NGO connection list
             if not self.ngo_connections[ngo_id]:
                 del self.ngo_connections[ngo_id]
+                print(f"🧹 Removed empty connection list for NGO {ngo_id}")
                 
-            print(f"📋 Sent allocation notification to NGO {ngo_id} ({len(self.ngo_connections.get(ngo_id, []))} connections)")
+            print(f"📋 NOTIFICATION SUMMARY: Sent to {sent_count}/{connections_count} connections for NGO {ngo_id}")
+            if disconnected:
+                print(f"🔌 Cleaned up {len(disconnected)} disconnected connections")
         else:
             print(f"⚠️ NGO {ngo_id} not connected via WebSocket")
+            print(f"🔍 Available NGO connections: {list(self.ngo_connections.keys())}")
+        print(f"🔔 NOTIFICATION DEBUG - End notification for NGO {ngo_id}\n")
 
 # Global WebSocket manager
 websocket_manager = FoodRescueConnectionManager()
@@ -326,6 +356,10 @@ async def create_donation(donation: DonationCreate):
         conn.commit()
         conn.close()
         
+        # Ensure donation_id is valid
+        if donation_id is None:
+            raise HTTPException(status_code=500, detail="Failed to create donation")
+        
         # Broadcast new donation to all connected clients
         await websocket_manager.notify_new_donation({
             "id": donation_id,
@@ -340,6 +374,16 @@ async def create_donation(donation: DonationCreate):
             "status": "available",
             "created_at": datetime.now().isoformat()
         })
+        
+        # 🎯 SMART ALLOCATION: Automatically trigger ML allocation for targeted NGO notifications
+        print(f"🚀 Starting automatic ML allocation for donation {donation_id}...")
+        try:
+            allocation_result = await allocate_donation(donation_id)
+            print(f"✅ Automatic allocation completed for donation {donation_id}")
+            print(f"🎯 {allocation_result.get('ngos_matched', 0)} NGOs matched and notified via ML algorithm")
+        except Exception as e:
+            print(f"⚠️ Automatic allocation failed for donation {donation_id}: {e}")
+            print("📢 Falling back to general broadcast notification")
         
         return {"id": donation_id, "message": "Donation created successfully"}
     
