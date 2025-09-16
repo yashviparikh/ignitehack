@@ -247,15 +247,8 @@ def startup_event():
     # Auto-open browser after a short delay
     def open_browser():
         time.sleep(2)  # Wait for server to start
-        # Try to get local IP for browser opening
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            local_ip = s.getsockname()[0]
-            s.close()
-            webbrowser.open(f"http://{local_ip}:8000")
-        except:
-            webbrowser.open("http://localhost:8000")
+        # Always open localhost (geolocation works there)
+        webbrowser.open("http://localhost:8000")
     
     # Run in a separate thread so it doesn't block startup
     threading.Thread(target=open_browser, daemon=True).start()
