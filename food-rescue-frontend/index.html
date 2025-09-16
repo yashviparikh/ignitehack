@@ -1413,9 +1413,11 @@
                     // Store complete NGO data for filtering
                     currentNGO = {
                         id: result.id,
-                        accepted_food_types: selectedFoodTypes, // Keep as array for easier filtering
+                        accepted_food_types: selectedFoodTypes, // Store as array, not JSON string
                         ...formData
                     };
+                    // Override the JSON string with the actual array
+                    currentNGO.accepted_food_types = selectedFoodTypes;
                     console.log('Stored currentNGO:', currentNGO);
                     showNotification('NGO registered successfully!');
                     document.getElementById('ngo-form').reset();
@@ -1551,9 +1553,22 @@
                             <p>Please fill out the registration form above and select your accepted food types to see matching donations.</p>
                         `;
                     } else {
+                        // Handle both array and string formats for food types
+                        let foodTypesDisplay = '';
+                        if (Array.isArray(currentNGO.accepted_food_types)) {
+                            foodTypesDisplay = currentNGO.accepted_food_types.join(', ');
+                        } else if (typeof currentNGO.accepted_food_types === 'string') {
+                            try {
+                                const parsed = JSON.parse(currentNGO.accepted_food_types);
+                                foodTypesDisplay = Array.isArray(parsed) ? parsed.join(', ') : currentNGO.accepted_food_types;
+                            } catch (e) {
+                                foodTypesDisplay = currentNGO.accepted_food_types;
+                            }
+                        }
+                        
                         emptyMessage.innerHTML = `
                             <h4>🔍 No Matching Donations</h4>
-                            <p>No donations available that match your accepted food types: <strong>${currentNGO.accepted_food_types.join(', ')}</strong></p>
+                            <p>No donations available that match your accepted food types: <strong>${foodTypesDisplay}</strong></p>
                             <p>Check back later for new donations!</p>
                         `;
                     }
