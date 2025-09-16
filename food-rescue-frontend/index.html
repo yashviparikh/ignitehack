@@ -1392,27 +1392,31 @@
                 latitude: currentLocation?.latitude,
                 longitude: currentLocation?.longitude,
                 accepted_food_types: JSON.stringify(selectedFoodTypes),
-                capacity: parseInt(document.getElementById('ngo-capacity').value) || null,
-                reliability: 5.0, // Default new NGO reliability
-                recent_donations: 0, // New NGO starts with 0 donations
-                schedule: document.getElementById('ngo-schedule').value || null
+                storage_capacity: parseInt(document.getElementById('ngo-capacity').value) || null,
+                operating_schedule: document.getElementById('ngo-schedule').value || "24/7"
             };
 
             try {
+                console.log('Sending NGO registration data:', formData);
                 const response = await fetch(`${API_BASE}/ngos/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('NGO registration result:', result);
                     // Store complete NGO data for filtering
                     currentNGO = {
                         id: result.id,
-                        accepted_food_types: selectedFoodTypes,
+                        accepted_food_types: selectedFoodTypes, // Keep as array for easier filtering
                         ...formData
                     };
+                    console.log('Stored currentNGO:', currentNGO);
                     showNotification('NGO registered successfully!');
                     document.getElementById('ngo-form').reset();
                     
@@ -1422,10 +1426,13 @@
                     // Reload available donations with filtering
                     loadAvailableDonations();
                 } else {
-                    showNotification('Error registering NGO', 'error');
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    showNotification(`Error registering NGO: ${response.status} - ${errorText}`, 'error');
                 }
             } catch (error) {
-                showNotification('Network error', 'error');
+                console.error('Network error details:', error);
+                showNotification(`Network error: ${error.message}`, 'error');
             }
         });
 
@@ -1438,12 +1445,25 @@
                 preferencesDiv.style.display = 'block';
                 displayDiv.innerHTML = '';
                 
-                currentNGO.accepted_food_types.forEach(foodType => {
-                    const tag = document.createElement('span');
-                    tag.style.cssText = 'background: #2196f3; color: white; padding: 4px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500;';
-                    tag.textContent = foodType;
-                    displayDiv.appendChild(tag);
-                });
+                // Handle both array and JSON string formats
+                let foodTypes = currentNGO.accepted_food_types;
+                if (typeof foodTypes === 'string') {
+                    try {
+                        foodTypes = JSON.parse(foodTypes);
+                    } catch (e) {
+                        // If not valid JSON, split by comma
+                        foodTypes = foodTypes.split(',').map(t => t.trim());
+                    }
+                }
+                
+                if (Array.isArray(foodTypes)) {
+                    foodTypes.forEach(foodType => {
+                        const tag = document.createElement('span');
+                        tag.style.cssText = 'background: #2196f3; color: white; padding: 4px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500;';
+                        tag.textContent = foodType;
+                        displayDiv.appendChild(tag);
+                    });
+                }
             } else {
                 preferencesDiv.style.display = 'none';
             }

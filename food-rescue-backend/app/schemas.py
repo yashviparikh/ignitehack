@@ -32,6 +32,9 @@ class NGOCreate(BaseModel):
     contact_phone: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    accepted_food_types: Optional[str] = None  # JSON string of food types
+    storage_capacity: Optional[int] = None
+    operating_schedule: Optional[str] = None
 
 class NGOResponse(BaseModel):
     id: int
@@ -39,6 +42,9 @@ class NGOResponse(BaseModel):
     contact_phone: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    accepted_food_types: Optional[str] = None
+    storage_capacity: Optional[int] = None
+    operating_schedule: Optional[str] = None
 
     class Config:
         from_attributes = True
