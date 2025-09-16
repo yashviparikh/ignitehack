@@ -125,7 +125,14 @@ async def upload_photo(donation_id: int, file: UploadFile = File(...), db: Sessi
 @app.post("/ngos/", response_model=NGOResponse)
 def create_ngo(ngo: NGOCreate, db: Session = Depends(get_db)):
     """Register a new NGO"""
-    db_ngo = NGO(**ngo.dict())
+    import json
+    
+    # Convert food types list to JSON string if it's a list
+    ngo_data = ngo.dict()
+    if isinstance(ngo_data.get('accepted_food_types'), list):
+        ngo_data['accepted_food_types'] = json.dumps(ngo_data['accepted_food_types'])
+    
+    db_ngo = NGO(**ngo_data)
     db.add(db_ngo)
     db.commit()
     db.refresh(db_ngo)

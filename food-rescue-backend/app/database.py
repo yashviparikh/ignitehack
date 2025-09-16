@@ -41,9 +41,6 @@ class NGO(Base):
     contact_phone = Column(String(20))
     latitude = Column(Float)
     longitude = Column(Float)
-    accepted_food_types = Column(Text)  # JSON string of accepted food types
-    storage_capacity = Column(Integer)  # meals per day
-    operating_schedule = Column(String(50))  # 24/7 or custom schedule
     
     # Relationship
     pickups = relationship("Pickup", back_populates="ngo")

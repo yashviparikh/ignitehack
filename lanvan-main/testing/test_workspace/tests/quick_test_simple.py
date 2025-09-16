@@ -22,7 +22,7 @@ app_path = Path(__file__).parent / "app"
 sys.path.insert(0, str(app_path))
 
 # Import server components directly
-from main import app
+from run import app
 from config import get_safe_port, DEFAULT_HTTP_PORT, FALLBACK_HTTP_PORT, DEFAULT_HTTPS_PORT, FALLBACK_HTTPS_PORT
 import uvicorn
 

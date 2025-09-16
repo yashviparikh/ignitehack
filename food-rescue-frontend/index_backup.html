@@ -5,21 +5,370 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Food Rescue Matchmaker</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; line-height: 1.6; }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { background: #2c3e50; color: white; padding: 1rem; text-align: center; }
-        .nav { display: flex; gap: 20px; justify-content: center; margin: 20px 0; }
-        .nav button { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; }
-        .nav button.active { background: #2980b9; }
-        .nav button:hover { background: #34495e; }
-        .dashboard { display: none; }
-        .dashboard.active { display: block; }
-        .form-group { margin: 15px 0; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { padding: 12px 24px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; }
-        .btn:hover { background: #2ecc71; }
+        /* Modern Color Scheme Variables */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            --accent-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #f5576c;
+            
+            --dark-bg: #1a1a2e;
+            --dark-secondary: #16213e;
+            --dark-accent: #0f3460;
+            
+            --light-bg: #f8faff;
+            --light-secondary: #ffffff;
+            --light-accent: #e8f2ff;
+            
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --text-light: #718096;
+            --text-white: #ffffff;
+            
+            --shadow-sm: 0 2px 4px rgba(102, 126, 234, 0.1);
+            --shadow-md: 0 4px 6px rgba(102, 126, 234, 0.15);
+            --shadow-lg: 0 10px 25px rgba(102, 126, 234, 0.2);
+            --shadow-xl: 0 20px 40px rgba(102, 126, 234, 0.25);
+        }
+
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6; 
+            color: var(--text-primary);
+            background: var(--light-bg);
+        }
+        
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        .header { 
+            background: var(--primary-gradient);
+            color: var(--text-white); 
+            padding: 1rem; 
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .nav { 
+            display: flex; 
+            gap: 20px; 
+            justify-content: center; 
+            margin: 20px 0; 
+            padding: 20px;
+            background: var(--light-secondary);
+            border-radius: 15px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .nav button, .nav-btn { 
+            padding: 12px 24px; 
+            background: var(--primary-gradient);
+            color: var(--text-white); 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav button.active, .nav-btn.active { 
+            background: var(--secondary-gradient);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .nav button:hover, .nav-btn:hover { 
+            background: var(--accent-gradient);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .dashboard { 
+            display: none; 
+            background: var(--light-secondary);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .dashboard.active { 
+            display: block; 
+        }
+        
+        .form-group { 
+            margin: 20px 0; 
+        }
+        
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-group input, .form-group textarea, .form-group select { 
+            width: 100%; 
+            padding: 12px 16px; 
+            border: 2px solid var(--light-accent);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--light-bg);
+        }
+        
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: var(--light-secondary);
+        }
+        
+        .btn { 
+            padding: 12px 24px; 
+            background: var(--success-gradient);
+            color: var(--text-white); 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            margin: 10px 5px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-danger {
+            background: var(--secondary-gradient);
+        }
+        
+        .btn-primary {
+            background: var(--primary-gradient);
+        }
+        
+        .btn-warning {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+        }
+        
+        /* Enhanced Login Page Styles */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: var(--primary-gradient);
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: var(--light-secondary);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow-xl);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-title {
+            font-size: 2.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .login-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+        
+        .tab-container {
+            display: flex;
+            margin-bottom: 30px;
+            background: var(--light-accent);
+            border-radius: 10px;
+            padding: 5px;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            background: var(--primary-gradient);
+            color: var(--text-white);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .form-group-enhanced {
+            margin: 20px 0;
+        }
+        
+        .form-group-enhanced label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .form-input-enhanced {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--light-accent);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--light-bg);
+        }
+        
+        .form-input-enhanced:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: var(--light-secondary);
+        }
+        
+        .btn-enhanced {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-gradient);
+            color: var(--text-white);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-enhanced:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        /* Card Styles */
+        .donation-card {
+            background: var(--light-secondary);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .donation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .donation-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        
+        .donation-card .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .status.available {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+        }
+        
+        .status.claimed {
+            background: var(--success-gradient);
+            color: var(--text-white);
+        }
+        
+        .status.completed {
+            background: var(--secondary-gradient);
+            color: var(--text-white);
+        }
+        
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            color: var(--text-white);
+            font-weight: 600;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .notification.success {
+            background: var(--success-gradient);
+        }
+        
+        .notification.error {
+            background: var(--secondary-gradient);
+        }
+        
+        .notification.warning {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
         .btn-secondary { background: #95a5a6; }
         .btn-secondary:hover { background: #7f8c8d; }
         .donations-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
@@ -31,12 +380,12 @@
         .status.delivered { background: #9b59b6; }
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
         .stat-card { background: #ecf0f1; padding: 20px; border-radius: 10px; text-align: center; }
-        .stat-number { font-size: 2em; font-weight: bold; color: #2c3e50; }
+        .stat-number { font-size: 2em; font-weight: bold; color: var(--text-primary); }
         .photo-upload { border: 2px dashed #ddd; padding: 40px; text-align: center; border-radius: 10px; cursor: pointer; }
-        .photo-upload:hover { border-color: #3498db; }
+        .photo-upload:hover { border-color: var(--primary-color); }
         .notification { padding: 10px; margin: 10px 0; border-radius: 5px; }
-        .notification.success { background: #d5f4e6; color: #27ae60; }
-        .notification.error { background: #fadbd8; color: #e74c3c; }
+        .notification.success { background: var(--light-success); color: var(--success-color); }
+        .notification.error { background: var(--light-danger); color: var(--danger-color); }
         
         /* Map embed styles */
         .map-container { 
@@ -66,23 +415,23 @@
             transition: all 0.2s ease;
         }
         .food-type-checkbox:hover {
-            background-color: #f0f8ff;
-            border-color: #3498db !important;
+            background-color: var(--light-primary);
+            border-color: var(--primary-color) !important;
         }
         .food-type-checkbox input[type="checkbox"]:checked + span {
             font-weight: bold;
-            color: #2c3e50;
+            color: var(--text-primary);
         }
         .food-type-checkbox:has(input[type="checkbox"]:checked) {
-            background-color: #e3f2fd;
-            border-color: #2196f3 !important;
-            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+            background-color: var(--light-secondary);
+            border-color: var(--secondary-color) !important;
+            box-shadow: 0 2px 4px rgba(118, 75, 162, 0.2);
         }
         
         /* Role selection styling */
         .role-card:hover {
-            border-color: #3498db !important;
-            background-color: #f0f8ff !important;
+            border-color: var(--primary-color) !important;
+            background-color: var(--light-primary) !important;
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
         }
@@ -383,18 +732,551 @@
         .logout-btn:hover {
             background: #c0392b;
         }
+        
+        /* Enhanced Home Page Styles */
+        .home-page {
+            display: block;
+            background: var(--primary-gradient);
+            min-height: 100vh;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, 
+                rgba(102, 126, 234, 0.9), 
+                rgba(118, 75, 162, 0.9), 
+                rgba(240, 147, 251, 0.8)
+            );
+            color: var(--text-white);
+            padding: 6rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="%23ffffff" opacity="0.1"/><circle cx="80" cy="80" r="3" fill="%23ffffff" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="%23ffffff" opacity="0.1"/></svg>');
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+        
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease;
+        }
+        
+        .hero p {
+            font-size: 1.4rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            animation: fadeInUp 1s ease 0.3s both;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .home-btn {
+            display: inline-block;
+            background: var(--accent-gradient);
+            color: var(--text-white);
+            padding: 15px 35px;
+            text-decoration: none;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-lg);
+            animation: fadeInUp 1s ease 0.6s both;
+            margin: 0 10px;
+        }
+        
+        .home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+            background: var(--secondary-gradient);
+        }
+        
+        .home-btn.secondary {
+            background: var(--success-gradient);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .home-btn.secondary:hover {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .top-performers {
+            padding: 5rem 0;
+            background: var(--light-secondary);
+            backdrop-filter: blur(10px);
+        }
+        
+        .top-performers h2 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .performers-section {
+            margin-bottom: 4rem;
+        }
+        
+        .performers-section h3 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .performers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .performer-card {
+            background: var(--light-secondary);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .performer-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+        
+        .performer-card:hover::before {
+            left: 100%;
+        }
+        
+        .performer-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .performer-card.gold {
+            border: 3px solid var(--primary-color);
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), var(--light-secondary));
+        }
+        
+        .performer-card.silver {
+            border: 3px solid var(--secondary-color);
+            background: linear-gradient(135deg, rgba(118, 75, 162, 0.1), var(--light-secondary));
+        }
+        
+        .performer-card.bronze {
+            border: 3px solid var(--accent-color);
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), var(--light-secondary));
+        }
+        
+        .performer-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+        
+        .performer-icon.gold {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .performer-icon.silver {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .performer-icon.bronze {
+            background: linear-gradient(135deg, #cd7f32, #8d5524);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .performer-name {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+        
+        .performer-stats {
+            color: var(--accent-color);
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .performer-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .performer-badge {
+            background: linear-gradient(135deg, #e8f5e8, #d5f4e6);
+            padding: 15px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #27ae60;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .stats-section {
+            background: linear-gradient(135deg, rgba(44, 62, 80, 0.95), rgba(52, 73, 94, 0.95));
+            color: white;
+            padding: 5rem 0;
+            text-align: center;
+        }
+        
+        .stats-section h2 {
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .stat-item {
+            padding: 2rem 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .stat-number {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #e74c3c, #f39c12);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        /* Reward Cards */
+        .reward-card {
+            background: var(--bg-secondary);
+            border: 2px solid transparent;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .reward-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+        }
+        
+        .reward-card:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .reward-card.affordable {
+            border-color: var(--success-color);
+            background: var(--light-success);
+        }
+        
+        .reward-card.expensive {
+            border-color: var(--text-secondary);
+            background: var(--bg-secondary);
+            opacity: 0.7;
+        }
+        
+        .reward-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .reward-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+        
+        .reward-description {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .reward-cost {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 15px;
+        }
+        
+        .redeem-btn {
+            background: var(--accent-gradient);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        
+        .redeem-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .redeem-btn:disabled {
+            background: var(--text-secondary);
+            cursor: not-allowed;
+            transform: none;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
+    <!-- Home Page -->
+    <div id="home-page" class="home-page">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <h1>🌟 Save Food, Feed People 🌟</h1>
+                <p>✨ Join our mission to reduce food waste and fight hunger in our communities ✨</p>
+                <div>
+                    <button class="home-btn" onclick="showDashboard('login-page')">🚀 Get Started</button>
+                    <button class="home-btn secondary" onclick="scrollToTopPerformers()">🏆 View Top Performers</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Performers Section -->
+        <section class="top-performers" id="top-performers">
+            <div class="container">
+                <h2>🏆 Top Performers 🏆</h2>
+                
+                <!-- Top 3 Donors -->
+                <div class="performers-section">
+                    <h3>🍽️ Top 3 Donors</h3>
+                    <div class="performers-grid">
+                        <div class="performer-card gold">
+                            <div class="performer-icon gold">🥇</div>
+                            <h4 class="performer-name">Green Valley Restaurant</h4>
+                            <div class="performer-stats">2,850 meals donated</div>
+                            <p class="performer-desc">🌱 Leading sustainable restaurant with zero-waste policy. Daily donations of fresh, organic meals to local shelters.</p>
+                            <div class="performer-badge">
+                                📍 Downtown • ⭐ 98% success rate • 🔥 Hot streak: 45 days
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card silver">
+                            <div class="performer-icon silver">🥈</div>
+                            <h4 class="performer-name">Urban Kitchen</h4>
+                            <div class="performer-stats">2,200 meals donated</div>
+                            <p class="performer-desc">🏢 Multi-location chain committed to community impact. Innovative food rescue program across 15 locations.</p>
+                            <div class="performer-badge">
+                                📍 City Center • ⭐ 95% success rate • 📈 Growing fast
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card bronze">
+                            <div class="performer-icon bronze">🥉</div>
+                            <h4 class="performer-name">Spice Garden</h4>
+                            <div class="performer-stats">1,950 meals donated</div>
+                            <p class="performer-desc">🍛 Family-owned restaurant specializing in traditional recipes. Weekly community feast programs.</p>
+                            <div class="performer-badge">
+                                📍 Old Town • ⭐ 92% success rate • 🎯 Consistent performer
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 3 NGOs -->
+                <div class="performers-section">
+                    <h3>🏛️ Top 3 NGOs</h3>
+                    <div class="performers-grid">
+                        <div class="performer-card gold">
+                            <div class="performer-icon gold">🏆</div>
+                            <h4 class="performer-name">Akshaya Patra Foundation</h4>
+                            <div class="performer-stats">8,500 meals served</div>
+                            <p class="performer-desc">🌍 World's largest school meal program, serving millions daily. Technology-driven solutions for efficient distribution.</p>
+                            <div class="performer-badge">
+                                👥 2,200 children fed • 📍 Multiple locations • 🚀 Fastest response
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card silver">
+                            <div class="performer-icon silver">🌟</div>
+                            <h4 class="performer-name">Smile Foundation</h4>
+                            <div class="performer-stats">6,200 meals served</div>
+                            <p class="performer-desc">💫 Empowering underprivileged communities through education and nutrition. Operating across 25 states.</p>
+                            <div class="performer-badge">
+                                👥 1,800 families helped • 📍 Nationwide • 💪 Most reliable
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card bronze">
+                            <div class="performer-icon bronze">✅</div>
+                            <h4 class="performer-name">LEPRA Society</h4>
+                            <div class="performer-stats">4,800 meals served</div>
+                            <p class="performer-desc">🏥 Healthcare-focused NGO providing medical care and nutrition. Specialized programs for remote communities.</p>
+                            <div class="performer-badge">
+                                👥 1,100 patients supported • 📍 Rural areas • 🎯 Specialized care
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 3 Volunteers -->
+                <div class="performers-section">
+                    <h3>⭐ Top 3 Volunteers</h3>
+                    <div class="performers-grid">
+                        <div class="performer-card gold">
+                            <div class="performer-icon gold">👩‍💼</div>
+                            <h4 class="performer-name">Sarah Chen</h4>
+                            <div class="performer-stats">1,500 hours served</div>
+                            <p class="performer-desc">🌟 Dedicated community coordinator with 6+ years experience. Leads volunteer teams and organizes distribution drives.</p>
+                            <div class="performer-badge">
+                                🎯 120 events led • ⭐ Community Leader • 🚀 Top motivator
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card silver">
+                            <div class="performer-icon silver">👨‍💻</div>
+                            <h4 class="performer-name">Michael Rodriguez</h4>
+                            <div class="performer-stats">1,200 hours served</div>
+                            <p class="performer-desc">💻 Software engineer and platform architect. Created this rescue system and provides ongoing technical support.</p>
+                            <div class="performer-badge">
+                                💻 85 features built • ⭐ Tech Lead • 🛠️ Platform creator
+                            </div>
+                        </div>
+                        
+                        <div class="performer-card bronze">
+                            <div class="performer-icon bronze">👩‍⚕️</div>
+                            <h4 class="performer-name">Dr. Anita Desai</h4>
+                            <div class="performer-stats">1,000 hours served</div>
+                            <p class="performer-desc">🏥 Nutritionist and food safety expert. Ensures all donated food meets health standards and provides education.</p>
+                            <div class="performer-badge">
+                                🔬 200 inspections • ⭐ Health Expert • 🎓 Educator
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="container">
+                <h2>🎯 Our Impact</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">2,500+</div>
+                        <div class="stat-label">🍽️ Meals Rescued</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">150+</div>
+                        <div class="stat-label">🏪 Restaurants</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">45+</div>
+                        <div class="stat-label">🏛️ NGO Partners</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">1,000+</div>
+                        <div class="stat-label">👥 People Fed</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="header" style="display: none;">
         <h1>🍽️ Food Rescue Matchmaker</h1>
         <p>Connecting surplus food with those who need it</p>
     </div>
 
     <!-- Enhanced Login Page -->
-    <div id="login-page" class="login-container">
+    <div id="login-page" class="login-container" style="display: none;">
         <div class="login-card">
             <div class="login-header">
+                <button onclick="goToHome()" style="position: absolute; top: 20px; left: 20px; background: transparent; border: none; font-size: 2rem; cursor: pointer; color: #3498db;" title="Back to Home">🏠</button>
                 <h1 class="login-title">🍽️ Food Rescue</h1>
                 <p class="login-subtitle">Connect. Share. Impact.</p>
             </div>
@@ -408,12 +1290,12 @@
             <form id="login-form" style="display: block;">
                 <div class="form-group-enhanced">
                     <label>Username</label>
-                    <input type="text" id="login-username" class="form-input-enhanced" required placeholder="Enter your username">
+                    <input type="text" id="login-username" class="form-input-enhanced" autocomplete="username" required placeholder="Enter your username">
                 </div>
                 
                 <div class="form-group-enhanced">
                     <label>Password</label>
-                    <input type="password" id="login-password" class="form-input-enhanced" required placeholder="Enter your password">
+                    <input type="password" id="login-password" class="form-input-enhanced" autocomplete="current-password" required placeholder="Enter your password">
                 </div>
                 
                 <button type="submit" class="btn-enhanced">
@@ -430,12 +1312,12 @@
                 
                 <div class="form-group-enhanced">
                     <label>Username</label>
-                    <input type="text" id="register-username" class="form-input-enhanced" required placeholder="Choose a username">
+                    <input type="text" id="register-username" class="form-input-enhanced" autocomplete="username" required placeholder="Choose a username">
                 </div>
                 
                 <div class="form-group-enhanced">
                     <label>Password</label>
-                    <input type="password" id="register-password" class="form-input-enhanced" required placeholder="Create a password">
+                    <input type="password" id="register-password" class="form-input-enhanced" autocomplete="new-password" required placeholder="Create a password">
                 </div>
                 
                 <div class="form-group-enhanced">
@@ -490,7 +1372,7 @@
         <div class="nav" id="main-nav">
             <button onclick="showDashboard('donor')" class="nav-btn active" id="donor-btn">🍞 Donor Dashboard</button>
             <button onclick="showDashboard('ngo')" class="nav-btn" id="ngo-btn">🏢 NGO Dashboard</button>
-            <button onclick="showDashboard('impact')" class="nav-btn" id="impact-btn">📊 Impact Dashboard</button>
+            <button onclick="showDashboard('volunteer')" class="nav-btn" id="volunteer-btn">🤝 Volunteer Dashboard</button>
         </div>
 
         <!-- Donor Dashboard -->
@@ -677,16 +1559,68 @@
             </div>
         </div>
 
-        <!-- Impact Dashboard -->
-        <div id="impact-dashboard" class="dashboard">
-            <h2>📊 Impact Dashboard</h2>
-            
-            <div class="stats-grid" id="stats-grid">
-                <!-- Stats will be populated here -->
+        <!-- Volunteer Dashboard -->
+        <div id="volunteer-dashboard" class="dashboard">
+            <h2>🤝 Volunteer Dashboard</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 1.1rem;">Help rescue food and make a difference in your community</p>
+
+            <div class="stats-grid" style="margin-bottom: 30px;">
+                <div class="stat-card" style="background: var(--primary-gradient); color: var(--text-light); text-align: center; padding: 25px; border-radius: 15px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🏆</div>
+                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;" id="volunteer-total-accepted">0</div>
+                    <div style="font-size: 1.1rem; opacity: 0.9;">Donations Accepted</div>
+                </div>
+                <div class="stat-card" style="background: var(--success-gradient); color: var(--text-light); text-align: center; padding: 25px; border-radius: 15px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">🍽️</div>
+                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;" id="volunteer-meals-rescued">0</div>
+                    <div style="font-size: 1.1rem; opacity: 0.9;">Meals Rescued</div>
+                </div>
+                <div class="stat-card" style="background: var(--warning-gradient); color: var(--text-light); text-align: center; padding: 25px; border-radius: 15px;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">⭐</div>
+                    <div style="font-size: 2.5rem; font-weight: bold; margin-bottom: 10px;" id="volunteer-impact-score">0</div>
+                    <div style="font-size: 1.1rem; opacity: 0.9;">Impact Score</div>
+                </div>
             </div>
 
-            <div style="margin: 40px 0;">
-                <canvas id="impact-chart" width="400" height="200"></canvas>
+            <!-- Rewards Section -->
+            <div style="background: var(--bg-primary); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-xl); margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--light-primary);">
+                    <h3 style="background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 2rem; font-weight: bold;">�️ Restaurant Vouchers</h3>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="background: var(--warning-gradient); color: var(--text-light); padding: 8px 16px; border-radius: 20px; font-weight: 600;">
+                            💎 <span id="volunteer-points-display">0</span> Points
+                        </div>
+                        <button onclick="loadRewards()" style="background: var(--accent-gradient); color: var(--text-light); border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: var(--shadow-md);">
+                            🔄 Refresh
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="background: var(--light-warning); padding: 15px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid var(--warning-color);">
+                    <div style="color: var(--text-primary); font-weight: 600; margin-bottom: 5px;">🤝 Restaurant Appreciation Program:</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">When you help restaurants reduce food waste by delivering their donations to NGOs, they show their appreciation by giving YOU discount vouchers! The better your delivery service (higher ratings), the bigger their thank you discount (10%-20% off your next meal at THE SAME restaurant you helped).</div>
+                </div>
+                
+                <div id="rewards-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                    <!-- Rewards will be populated here -->
+                </div>
+            </div>
+
+            <div style="background: var(--bg-primary); border-radius: 20px; padding: 30px; box-shadow: var(--shadow-xl);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--light-primary);">
+                    <h3 style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 2rem; font-weight: bold;">🚨 Available Donations</h3>
+                    <button onclick="refreshVolunteerDonations()" style="background: var(--primary-gradient); color: var(--text-light); border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: var(--shadow-md);">
+                        🔄 Refresh
+                    </button>
+                </div>
+                
+                <ul id="volunteer-donation-list" style="list-style: none; padding: 0;">
+                    <li style="text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 1.2rem; font-style: italic;">
+                        <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;">🍽️</div>
+                        <div>No donations available at the moment.</div>
+                        <div style="margin-top: 10px; font-size: 1rem;">Check back soon for new opportunities to help!</div>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -698,12 +1632,20 @@
         const API_BASE = 'http://127.0.0.1:8000/api';
         let currentNGO = null; // Will store complete NGO data object
         let currentLocation = null;
-<<<<<<< HEAD
+        let currentUser = null; // Will store current user info
+        let userRole = null; // Will store current user role
         
+        // Authentication and Role Management
+        let registeredUsers = {
+            'demo_donor': { password: 'demo123', name: 'Demo Restaurant', email: 'demo@restaurant.com' },
+            'demo_ngo': { password: 'demo123', name: 'Demo NGO', email: 'demo@ngo.org' },
+            'demo_admin': { password: 'demo123', name: 'Demo Admin', email: 'demo@admin.com' }
+        };
+
         // WebSocket connection for real-time updates
         let websocket = null;
         let reconnectAttempts = 0;
-        const maxReconnectAttempts = 5;
+        const maxReconnectAttempts = 3; // Reduced to prevent console spam
         let reconnectTimeout = null;
 
         // Initialize WebSocket connection (completely silent and transparent)
@@ -735,34 +1677,51 @@
                 };
                 
                 websocket.onclose = function(event) {
-                    console.log('🔌 Connection lost, attempting reconnect...');
+                    // Only log on first disconnect to avoid spam
+                    if (reconnectAttempts === 0) {
+                        console.log('🔌 Connection lost, switching to offline mode');
+                    }
                     websocket = null;
                     
-                    // Silent reconnection attempts
-                    if (reconnectAttempts < maxReconnectAttempts) {
+                    // Limit reconnection attempts to prevent spam
+                    if (reconnectAttempts < 3) {
                         reconnectAttempts++;
-                        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+                        const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
                         
-                        console.log(`🔄 Reconnecting in ${delay/1000}s (attempt ${reconnectAttempts})`);
+                        // Only log first few attempts
+                        if (reconnectAttempts <= 2) {
+                            console.log(`🔄 Reconnecting in ${delay/1000}s (attempt ${reconnectAttempts})`);
+                        }
                         reconnectTimeout = setTimeout(initWebSocket, delay);
                     } else {
-                        console.log('❌ Falling back to polling mode');
-                        // Fall back to regular polling silently
+                        // Silent fallback after max attempts
+                        if (!window.webSocketFallbackShown) {
+                            console.log('📡 Backend unavailable - using offline mode');
+                            window.webSocketFallbackShown = true;
+                        }
                     }
                 };
                 
                 websocket.onerror = function(error) {
-                    console.error('❌ Connection error:', error);
+                    // Only log error once to avoid spam
+                    if (!window.webSocketErrorShown) {
+                        console.log('📡 Backend server not running - offline mode active');
+                        window.webSocketErrorShown = true;
+                    }
                 };
                 
             } catch (error) {
-                console.error('❌ WebSocket unavailable, using polling mode');
+                // Silent fallback for WebSocket creation errors
+                if (!window.webSocketInitErrorShown) {
+                    console.log('📡 WebSocket unavailable - using offline mode');
+                    window.webSocketInitErrorShown = true;
+                }
             }
         }
 
         // Handle incoming messages (completely transparent to user)
         function handleWebSocketMessage(message) {
-            console.log('📨 Live update received:', message.type);
+            // console.log('📨 Live update received:', message.type);
             
             switch (message.type) {
                 case 'new_donation':
@@ -787,8 +1746,8 @@
             if (activeDashboard === 'ngo-dashboard') {
                 loadAvailableDonations();
             }
-            if (activeDashboard === 'impact-dashboard') {
-                loadImpactData();
+            if (activeDashboard === 'volunteer-dashboard') {
+                loadVolunteerData();
             }
         }
 
@@ -809,27 +1768,18 @@
                 loadMyDonations();
             } else if (activeDashboard === 'ngo-dashboard') {
                 loadAvailableDonations();
-            } else if (activeDashboard === 'impact-dashboard') {
-                loadImpactData();
+            } else if (activeDashboard === 'volunteer-dashboard') {
+                loadVolunteerData();
             }
         }
 
         function handlePickupUpdateSilent(data) {
-            // Refresh impact dashboard silently
+            // Refresh volunteer dashboard silently
             const activeDashboard = document.querySelector('.dashboard.active').id;
-            if (activeDashboard === 'impact-dashboard') {
-                loadImpactData();
+            if (activeDashboard === 'volunteer-dashboard') {
+                loadVolunteerData();
             }
-=======
-        let currentUser = null; // Will store current user info
-        let userRole = null; // Will store current user role
-
-        // Authentication and Role Management
-        let registeredUsers = {
-            'demo_donor': { password: 'demo123', name: 'Demo Restaurant', email: 'demo@restaurant.com' },
-            'demo_ngo': { password: 'demo123', name: 'Demo NGO', email: 'demo@ngo.org' },
-            'demo_admin': { password: 'demo123', name: 'Demo Admin', email: 'demo@admin.com' }
-        };
+        }
 
         // Tab switching functionality
         function switchTab(tab) {
@@ -945,12 +1895,12 @@
         function setupRoleBasedInterface(role) {
             const donorBtn = document.getElementById('donor-btn');
             const ngoBtn = document.getElementById('ngo-btn');
-            const impactBtn = document.getElementById('impact-btn');
+            const volunteerBtn = document.getElementById('volunteer-btn');
             
             // Hide all nav buttons initially
             donorBtn.style.display = 'none';
             ngoBtn.style.display = 'none';
-            impactBtn.style.display = 'none';
+            volunteerBtn.style.display = 'none';
             
             // Show and activate appropriate dashboard based on role
             if (role === 'donor') {
@@ -962,9 +1912,9 @@
                 ngoBtn.classList.add('active');
                 showDashboard('ngo');
             } else if (role === 'admin') {
-                impactBtn.style.display = 'block';
-                impactBtn.classList.add('active');
-                showDashboard('impact');
+                volunteerBtn.style.display = 'block';
+                volunteerBtn.classList.add('active');
+                showDashboard('volunteer');
             }
         }
 
@@ -992,7 +1942,6 @@
             });
             
             showNotification('Logged out successfully', 'success');
->>>>>>> c75038af474464d42375073fabeb4208ba99d97c
         }
 
         // Date formatting utility
@@ -1006,8 +1955,29 @@
             return `${day}/${month}/${year} ${hours}:${minutes}`;
         }
 
+        // Home page navigation functions
+        function scrollToTopPerformers() {
+            document.getElementById('top-performers').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        function goToHome() {
+            document.getElementById('home-page').style.display = 'block';
+            document.getElementById('login-page').style.display = 'none';
+            // Hide all dashboards
+            document.querySelectorAll('.dashboard').forEach(d => d.classList.remove('active'));
+        }
+
         // Navigation with role-based access control
         function showDashboard(type) {
+            // Handle special case for login page
+            if (type === 'login-page') {
+                document.getElementById('home-page').style.display = 'none';
+                document.getElementById('login-page').style.display = 'flex';
+                return;
+            }
+            
             // Check if user has permission to access this dashboard
             if (userRole && userRole !== type && userRole !== 'admin') {
                 showNotification(`Access denied: You don't have permission to view ${type} dashboard`, 'error');
@@ -1033,7 +2003,7 @@
                     displayDonations([], 'available-donations', false);
                 }
             }
-            if (type === 'impact') loadImpactData();
+            if (type === 'volunteer') loadVolunteerData();
         }
 
         // Notifications
@@ -1394,27 +2364,33 @@
                 latitude: currentLocation?.latitude,
                 longitude: currentLocation?.longitude,
                 accepted_food_types: JSON.stringify(selectedFoodTypes),
-                capacity: parseInt(document.getElementById('ngo-capacity').value) || null,
-                reliability: 5.0, // Default new NGO reliability
-                recent_donations: 0, // New NGO starts with 0 donations
-                schedule: document.getElementById('ngo-schedule').value || null
+                storage_capacity: parseInt(document.getElementById('ngo-capacity').value) || null,
+                operating_schedule: document.getElementById('ngo-schedule').value || "24/7"
             };
 
             try {
+                console.log('Sending NGO registration data:', formData);
                 const response = await fetch(`${API_BASE}/ngos/`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+
                 if (response.ok) {
                     const result = await response.json();
+                    console.log('NGO registration result:', result);
                     // Store complete NGO data for filtering
                     currentNGO = {
                         id: result.id,
-                        accepted_food_types: selectedFoodTypes,
+                        accepted_food_types: selectedFoodTypes, // Store as array, not JSON string
                         ...formData
                     };
+                    // Override the JSON string with the actual array
+                    currentNGO.accepted_food_types = selectedFoodTypes;
+                    console.log('Stored currentNGO:', currentNGO);
                     showNotification('NGO registered successfully!');
                     document.getElementById('ngo-form').reset();
                     
@@ -1424,10 +2400,13 @@
                     // Reload available donations with filtering
                     loadAvailableDonations();
                 } else {
-                    showNotification('Error registering NGO', 'error');
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    showNotification(`Error registering NGO: ${response.status} - ${errorText}`, 'error');
                 }
             } catch (error) {
-                showNotification('Network error', 'error');
+                console.error('Network error details:', error);
+                showNotification(`Network error: ${error.message}`, 'error');
             }
         });
 
@@ -1440,12 +2419,25 @@
                 preferencesDiv.style.display = 'block';
                 displayDiv.innerHTML = '';
                 
-                currentNGO.accepted_food_types.forEach(foodType => {
-                    const tag = document.createElement('span');
-                    tag.style.cssText = 'background: #2196f3; color: white; padding: 4px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500;';
-                    tag.textContent = foodType;
-                    displayDiv.appendChild(tag);
-                });
+                // Handle both array and JSON string formats
+                let foodTypes = currentNGO.accepted_food_types;
+                if (typeof foodTypes === 'string') {
+                    try {
+                        foodTypes = JSON.parse(foodTypes);
+                    } catch (e) {
+                        // If not valid JSON, split by comma
+                        foodTypes = foodTypes.split(',').map(t => t.trim());
+                    }
+                }
+                
+                if (Array.isArray(foodTypes)) {
+                    foodTypes.forEach(foodType => {
+                        const tag = document.createElement('span');
+                        tag.style.cssText = 'background: #2196f3; color: white; padding: 4px 12px; border-radius: 16px; font-size: 0.85em; font-weight: 500;';
+                        tag.textContent = foodType;
+                        displayDiv.appendChild(tag);
+                    });
+                }
             } else {
                 preferencesDiv.style.display = 'none';
             }
@@ -1454,19 +2446,23 @@
         // Load donations
         async function loadMyDonations() {
             try {
-                console.log('loadMyDonations called');
-                console.log('currentUser:', currentUser);
+                // console.log('loadMyDonations called');
+                // console.log('currentUser:', currentUser);
                 // Filter donations by current user
                 const url = currentUser?.username ? 
                     `${API_BASE}/donations/?donor_user=${encodeURIComponent(currentUser.username)}` :
                     `${API_BASE}/donations/`;
-                console.log('Fetching URL:', url);
+                // console.log('Fetching URL:', url);
                 const response = await fetch(url);
                 const donations = await response.json();
-                console.log('Received donations:', donations.length, donations);
+                // console.log('Received donations:', donations.length, donations);
                 displayDonations(donations, 'my-donations', true);
             } catch (error) {
-                console.error('Error loading donations:', error);
+                // Only show error once to avoid spam
+                if (!window.loadDonationsErrorShown) {
+                    console.log('Backend server offline - showing demo mode');
+                    window.loadDonationsErrorShown = true;
+                }
             }
         }
 
@@ -1475,12 +2471,12 @@
                 const response = await fetch(`${API_BASE}/donations/?status=available`);
                 let donations = await response.json();
                 
-                console.log('Total available donations:', donations.length);
-                console.log('Current NGO:', currentNGO);
+                // console.log('Total available donations:', donations.length);
+                // console.log('Current NGO:', currentNGO);
                 
                 // Only show donations if NGO is registered and has selected food types
                 if (!currentNGO || !currentNGO.accepted_food_types || currentNGO.accepted_food_types.length === 0) {
-                    console.log('NGO not registered or no food types selected - showing no donations');
+                    // console.log('NGO not registered or no food types selected - showing no donations');
                     displayDonations([], 'available-donations', false);
                     return;
                 }
@@ -1533,9 +2529,22 @@
                             <p>Please fill out the registration form above and select your accepted food types to see matching donations.</p>
                         `;
                     } else {
+                        // Handle both array and string formats for food types
+                        let foodTypesDisplay = '';
+                        if (Array.isArray(currentNGO.accepted_food_types)) {
+                            foodTypesDisplay = currentNGO.accepted_food_types.join(', ');
+                        } else if (typeof currentNGO.accepted_food_types === 'string') {
+                            try {
+                                const parsed = JSON.parse(currentNGO.accepted_food_types);
+                                foodTypesDisplay = Array.isArray(parsed) ? parsed.join(', ') : currentNGO.accepted_food_types;
+                            } catch (e) {
+                                foodTypesDisplay = currentNGO.accepted_food_types;
+                            }
+                        }
+                        
                         emptyMessage.innerHTML = `
                             <h4>🔍 No Matching Donations</h4>
-                            <p>No donations available that match your accepted food types: <strong>${currentNGO.accepted_food_types.join(', ')}</strong></p>
+                            <p>No donations available that match your accepted food types: <strong>${foodTypesDisplay}</strong></p>
                             <p>Check back later for new donations!</p>
                         `;
                     }
@@ -1613,46 +2622,352 @@
             }
         }
 
-        // Load impact data
-        async function loadImpactData() {
+        // Load volunteer data
+        async function loadVolunteerData() {
+            // Load volunteer stats from localStorage
+            const savedStats = localStorage.getItem('volunteerStats');
+            let stats = { totalAccepted: 0, mealsRescued: 0, impactScore: 0, points: 0, averageRating: 0, deliveryHistory: [] };
+            
+            if (savedStats) {
+                stats = JSON.parse(savedStats);
+            }
+            
+            // Update display
+            document.getElementById('volunteer-total-accepted').textContent = stats.totalAccepted;
+            document.getElementById('volunteer-meals-rescued').textContent = stats.mealsRescued;
+            document.getElementById('volunteer-impact-score').textContent = stats.impactScore;
+            document.getElementById('volunteer-points-display').textContent = stats.points;
+            
+            // Load available donations and rewards
+            loadVolunteerDonations();
+            loadRewards();
+        }
+
+        // Load donations for volunteers
+        async function loadVolunteerDonations() {
             try {
-                const response = await fetch(`${API_BASE}/stats/`);
-                const stats = await response.json();
-                displayStats(stats);
+                const response = await fetch(`${API_BASE}/donations/available/`);
+                const donations = await response.json();
+                displayVolunteerDonations(donations);
             } catch (error) {
-                console.error('Error loading stats:', error);
+                console.error('Error loading volunteer donations:', error);
+                // Show offline mode with sample data
+                displayVolunteerDonations([]);
             }
         }
 
-        // Display stats
-        function displayStats(stats) {
-            const container = document.getElementById('stats-grid');
-            container.innerHTML = `
-                <div class="stat-card">
-                    <div class="stat-number">${stats.total_donations}</div>
-                    <div>Total Donations</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.delivered_donations}</div>
-                    <div>Delivered</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.meals_saved}</div>
-                    <div>Meals Saved</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.total_beneficiaries}</div>
-                    <div>People Fed</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.waste_prevented_kg}kg</div>
-                    <div>Waste Prevented</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number">${stats.active_ngos}</div>
-                    <div>Active NGOs</div>
-                </div>
-            `;
+        // Display volunteer donations
+        function displayVolunteerDonations(donations) {
+            const container = document.getElementById('volunteer-donation-list');
+            
+            if (donations.length === 0) {
+                container.innerHTML = `
+                    <li style="text-align: center; padding: 60px 20px; color: var(--text-secondary); font-size: 1.2rem; font-style: italic;">
+                        <div style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;">🍽️</div>
+                        <div>No donations available at the moment.</div>
+                        <div style="margin-top: 10px; font-size: 1rem;">Check back soon for new opportunities to help!</div>
+                    </li>
+                `;
+                return;
+            }
+
+            container.innerHTML = donations.map(donation => `
+                <li style="background: var(--bg-secondary); border: 2px solid transparent; border-radius: 15px; padding: 25px; margin-bottom: 20px; transition: all 0.3s ease; position: relative; overflow: hidden;">
+                    <div style="content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-gradient);"></div>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <div>
+                            <div style="font-size: 1.5rem; font-weight: bold; color: var(--text-primary); margin-bottom: 5px;">${donation.food_type}</div>
+                            <div style="color: var(--secondary-color); font-size: 1.1rem; font-weight: 600;">📍 ${donation.restaurant_name}</div>
+                        </div>
+                        ${donation.expires_in_hours && donation.expires_in_hours <= 2 ? 
+                            '<div style="background: var(--secondary-gradient); color: var(--text-light); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">🚨 Urgent</div>' : ''}
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2rem;">📦</span>
+                            <span style="color: var(--text-secondary);">Quantity: <strong>${donation.quantity}</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2rem;">💰</span>
+                            <span style="color: var(--text-secondary);">Pay: <strong>₹${donation.discounted_price}</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2rem;">⏰</span>
+                            <span style="color: var(--text-secondary);">Expires: <strong>Soon</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2rem;">📍</span>
+                            <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(donation.pickup_address || 'Location not provided')}" 
+                               target="_blank" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">${donation.pickup_address || 'Location not provided'}</a>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <button onclick="acceptVolunteerDonation(${donation.id}, '${donation.food_type}', '${donation.quantity}')" 
+                                style="background: var(--success-gradient); color: var(--text-light); border: none; padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600; box-shadow: var(--shadow-md); flex: 1;">
+                            ✅ Accept & Help
+                        </button>
+                        <button onclick="showVolunteerDonationDetails(${donation.id})" 
+                                style="background: transparent; color: var(--primary-color); border: 2px solid var(--primary-color); padding: 12px 25px; border-radius: 25px; cursor: pointer; font-size: 1rem; font-weight: 600;">
+                            📋 Details
+                        </button>
+                    </div>
+                </li>
+            `).join('');
+        }
+
+        // Accept donation as volunteer
+        function acceptVolunteerDonation(donationId, foodType, quantity) {
+            // Update volunteer stats
+            let stats = JSON.parse(localStorage.getItem('volunteerStats') || '{"totalAccepted": 0, "mealsRescued": 0, "impactScore": 0, "points": 0, "averageRating": 0, "deliveryHistory": []}');
+            stats.totalAccepted++;
+            stats.mealsRescued += parseInt(quantity) || 1;
+            stats.impactScore += Math.floor((parseInt(quantity) || 1) * 10);
+            
+            // Award points for accepting donation (10 points + 5 points per meal)
+            const pointsEarned = 10 + (parseInt(quantity) || 1) * 5;
+            stats.points += pointsEarned;
+            
+            // Simulate delivery completion with rating (in real app, this would be after actual delivery)
+            const simulatedRating = Math.random() * (5 - 3.5) + 3.5; // Random rating between 3.5 and 5
+            const restaurantName = document.querySelector(`li[data-id='${donationId}'] .donation-restaurant`)?.textContent?.replace('📍 ', '') || 'Demo Restaurant';
+            
+            // Add to delivery history
+            stats.deliveryHistory.push({
+                restaurantName: restaurantName,
+                rating: Math.round(simulatedRating * 10) / 10,
+                deliveryDate: new Date().toLocaleDateString(),
+                foodType: foodType
+            });
+            
+            // Update average rating
+            const totalRating = stats.deliveryHistory.reduce((sum, delivery) => sum + delivery.rating, 0);
+            stats.averageRating = Math.round((totalRating / stats.deliveryHistory.length) * 10) / 10;
+            
+            localStorage.setItem('volunteerStats', JSON.stringify(stats));
+            
+            // Update display
+            document.getElementById('volunteer-total-accepted').textContent = stats.totalAccepted;
+            document.getElementById('volunteer-meals-rescued').textContent = stats.mealsRescued;
+            document.getElementById('volunteer-impact-score').textContent = stats.impactScore;
+            document.getElementById('volunteer-points-display').textContent = stats.points;
+            
+            // Show success message with points earned
+            showNotification(`🎉 Great! You've accepted the ${foodType} donation and earned ${pointsEarned} points! Rating: ${Math.round(simulatedRating * 10) / 10}⭐`, 'success');
+            
+            // Reload donations and refresh rewards affordability
+            loadVolunteerDonations();
+            loadRewards();
+        }
+
+        // Show volunteer donation details
+        function showVolunteerDonationDetails(donationId) {
+            alert('📋 Donation Details:\n\nThis feature will show detailed information about the donation, including:\n• Pickup instructions\n• Contact details\n• Special requirements\n• Nutritional information\n• Storage instructions');
+        }
+
+        // Refresh volunteer donations
+        function refreshVolunteerDonations() {
+            showNotification("🔄 Refreshing donations...", 'success');
+            loadVolunteerDonations();
+        }
+
+        // Load rewards from API or use fallback data
+        async function loadRewards() {
+            try {
+                // Try to load from your Flask API
+                const response = await fetch('http://127.0.0.1:5000/api/rewards');
+                const data = await response.json();
+                displayRewards(data.rewards);
+            } catch (error) {
+                console.log('Using restaurant-based rewards system');
+                // Generate rewards based on volunteer's delivery history
+                const stats = JSON.parse(localStorage.getItem('volunteerStats') || '{"deliveryHistory": [], "averageRating": 0}');
+                const restaurantRewards = generateRestaurantRewards(stats);
+                displayRewards(restaurantRewards);
+            }
+        }
+
+        // Generate restaurant discount vouchers based on delivery history and ratings
+        function generateRestaurantRewards(stats) {
+            const deliveryHistory = stats.deliveryHistory || [];
+            const averageRating = stats.averageRating || 0;
+            
+            // Create a map of restaurants and their delivery count/average rating
+            const restaurantMap = {};
+            deliveryHistory.forEach(delivery => {
+                if (!restaurantMap[delivery.restaurantName]) {
+                    restaurantMap[delivery.restaurantName] = {
+                        name: delivery.restaurantName,
+                        deliveries: 0,
+                        totalRating: 0,
+                        foodTypes: []
+                    };
+                }
+                restaurantMap[delivery.restaurantName].deliveries++;
+                restaurantMap[delivery.restaurantName].totalRating += delivery.rating;
+                if (!restaurantMap[delivery.restaurantName].foodTypes.includes(delivery.foodType)) {
+                    restaurantMap[delivery.restaurantName].foodTypes.push(delivery.foodType);
+                }
+            });
+
+            const rewards = [];
+            
+            // Generate rewards for restaurants the volunteer has delivered from
+            Object.values(restaurantMap).forEach((restaurant, index) => {
+                const avgRating = restaurant.totalRating / restaurant.deliveries;
+                
+                // Calculate discount based on rating (3.5-4.0 = 10%, 4.0-4.5 = 15%, 4.5-5.0 = 20%)
+                let discountPercent = 10;
+                if (avgRating >= 4.5) discountPercent = 20;
+                else if (avgRating >= 4.0) discountPercent = 15;
+                
+                // Points cost based on discount value (higher discounts cost more points)
+                const pointsCost = discountPercent * 10 + restaurant.deliveries * 5;
+                
+                rewards.push({
+                    id: index + 1,
+                    name: `${discountPercent}% Off at ${restaurant.name}`,
+                    description: `🤝 Thank you gift from ${restaurant.name}! They're offering you ${discountPercent}% discount as appreciation for helping them rescue ${restaurant.deliveries} donation(s). Your excellent ${avgRating.toFixed(1)}⭐ service earned this reward!`,
+                    points_cost: pointsCost,
+                    voucher_code: `THANKYOU${restaurant.name.replace(/\s+/g, '').toUpperCase()}${discountPercent}`,
+                    icon: "🍽️",
+                    restaurant: restaurant.name,
+                    discount: discountPercent,
+                    rating: avgRating,
+                    deliveries: restaurant.deliveries
+                });
+            });
+
+            // Add some default rewards for restaurants not yet delivered to
+            if (rewards.length < 3) {
+                const defaultRestaurants = [
+                    { name: "Green Garden Restaurant", icon: "🥗" },
+                    { name: "Italian Corner", icon: "🍝" },
+                    { name: "Spice Palace", icon: "🍛" },
+                    { name: "Fresh Bites Cafe", icon: "🥪" },
+                    { name: "Ocean View Restaurant", icon: "�" }
+                ];
+                
+                defaultRestaurants.forEach((restaurant, index) => {
+                    if (!restaurantMap[restaurant.name]) {
+                        rewards.push({
+                            id: rewards.length + 1,
+                            name: `10% Off at ${restaurant.name}`,
+                            description: `🌟 Help ${restaurant.name} reduce food waste and they'll thank you with a 10% discount! Complete your first delivery from this restaurant to unlock this appreciation voucher.`,
+                            points_cost: 150,
+                            voucher_code: `WELCOME${restaurant.name.replace(/\s+/g, '').toUpperCase()}`,
+                            icon: restaurant.icon,
+                            restaurant: restaurant.name,
+                            discount: 10,
+                            rating: 0,
+                            deliveries: 0,
+                            isNewRestaurant: true
+                        });
+                    }
+                });
+            }
+
+            return rewards;
+        }
+
+        // Display rewards in the grid
+        function displayRewards(rewards) {
+            const container = document.getElementById('rewards-grid');
+            const stats = JSON.parse(localStorage.getItem('volunteerStats') || '{"points": 0}');
+            const userPoints = stats.points || 0;
+
+            if (rewards.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: var(--text-secondary); grid-column: 1/-1;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">�️</div>
+                        <div>Complete your first delivery to unlock restaurant discount vouchers!</div>
+                        <div style="margin-top: 10px; font-size: 0.9rem;">The more deliveries you complete with high ratings, the better discounts you'll earn!</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = rewards.map(reward => {
+                const canAfford = userPoints >= reward.points_cost;
+                const cardClass = canAfford ? 'reward-card affordable' : 'reward-card expensive';
+                
+                // Special styling for new restaurants vs delivered restaurants
+                const borderColor = reward.isNewRestaurant ? 'var(--text-secondary)' : 'var(--success-color)';
+                const badgeText = reward.isNewRestaurant ? '🆕 New Restaurant' : `✅ ${reward.deliveries} Deliveries • ${reward.rating.toFixed(1)}⭐`;
+                
+                return `
+                    <div class="${cardClass}" style="border-left: 4px solid ${borderColor};">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
+                            <div class="reward-icon">${reward.icon || '�️'}</div>
+                            <div style="background: ${reward.isNewRestaurant ? 'var(--light-secondary)' : 'var(--light-success)'}; 
+                                        color: ${reward.isNewRestaurant ? 'var(--secondary-color)' : 'var(--success-color)'}; 
+                                        padding: 4px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: 600;">
+                                ${badgeText}
+                            </div>
+                        </div>
+                        <div class="reward-name">${reward.name}</div>
+                        <div class="reward-description">${reward.description}</div>
+                        <div class="reward-cost">💎 ${reward.points_cost} Points</div>
+                        <button class="redeem-btn" 
+                                ${!canAfford ? 'disabled' : ''} 
+                                onclick="redeemReward(${reward.id}, '${reward.name}', ${reward.points_cost}, '${reward.voucher_code || 'N/A'}', '${reward.restaurant}', ${reward.discount})">
+                            ${canAfford ? `�️ Get ${reward.discount}% Off` : '🔒 Need More Points'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Redeem a reward
+        async function redeemReward(rewardId, rewardName, pointsCost, voucherCode, restaurantName, discountPercent) {
+            const stats = JSON.parse(localStorage.getItem('volunteerStats') || '{"points": 0}');
+            
+            if (stats.points < pointsCost) {
+                showNotification('❌ Not enough points to redeem this reward!', 'error');
+                return;
+            }
+
+            // Deduct points
+            stats.points -= pointsCost;
+            localStorage.setItem('volunteerStats', JSON.stringify(stats));
+            
+            // Update display
+            document.getElementById('volunteer-points-display').textContent = stats.points;
+            
+            // Show success message with voucher code
+            showNotification(`🤝 Restaurant appreciation voucher unlocked! Code: ${voucherCode}`, 'success');
+            
+            // Show detailed redemption popup with restaurant-specific information
+            alert(`�️ Restaurant Discount Voucher Redeemed!\n\n` +
+                  `Restaurant: ${restaurantName}\n` +
+                  `Discount: ${discountPercent}% OFF\n` +
+                  `Voucher Code: ${voucherCode}\n\n` +
+                  `📱 How to use:\n` +
+                  `1. Visit ${restaurantName}\n` +
+                  `2. Show this voucher code when ordering\n` +
+                  `3. Enjoy your ${discountPercent}% discount!\n\n` +
+                  `Points Remaining: ${stats.points}\n\n` +
+                  `💡 Tip: Complete more deliveries with high ratings to unlock even better discounts!`);
+            
+            // Refresh rewards display
+            loadRewards();
+            
+            try {
+                // Try to notify the Flask API about the redemption
+                await fetch('http://127.0.0.1:5000/api/volunteers/1/redeem_reward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        reward_id: rewardId,
+                        restaurant_name: restaurantName,
+                        discount_percent: discountPercent
+                    })
+                });
+            } catch (error) {
+                console.log('API not available, using offline mode');
+            }
         }
 
         // Track donation status (simple alert for now)
@@ -1669,7 +2984,7 @@
             
             // Load initial data
             loadMyDonations();
-            loadImpactData();
+            loadVolunteerData();
         });
 
         // Reduced auto-refresh interval (WebSocket handles most updates)
@@ -1680,7 +2995,7 @@
                 const activeDashboard = document.querySelector('.dashboard.active').id;
                 if (activeDashboard === 'donor-dashboard') loadMyDonations();
                 if (activeDashboard === 'ngo-dashboard') loadAvailableDonations();
-                if (activeDashboard === 'impact-dashboard') loadImpactData();
+                if (activeDashboard === 'volunteer-dashboard') loadVolunteerData();
             }
         }, 30000);
 

@@ -22,7 +22,7 @@ app_path = Path(__file__).parent / "app"
 sys.path.insert(0, str(app_path))
 
 # Import server components directly
-from main import app
+from run import app
 import uvicorn
 
 # Port constants (same as run.py)
