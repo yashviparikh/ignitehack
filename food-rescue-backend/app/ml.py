@@ -78,24 +78,31 @@ def match_partial_split(donation: Dict, ngos: List[Dict], ml_model) -> Tuple[Lis
         -x["ngo"].get("reliability", 0.8)  # Higher reliability is better
     ))
     
-    # Use ML model to predict allocation scores if available
+    # Use ML model to predict allocation scores if available (ML-FIRST APPROACH)
+    ml_predictions_successful = False
+    
     if ml_model is not None:
         try:
+            print("🧠 Using ML model for allocation predictions...")
             for ngo_data in ngo_features:
                 features_array = np.array([ngo_data["features"]])
                 prediction = ml_model.predict(features_array)[0]
                 ngo_data["ml_score"] = prediction
+            ml_predictions_successful = True
+            print(f"✅ ML predictions successful for {len(ngo_features)} NGOs")
         except Exception as e:
-            print(f"ML model prediction failed: {e}")
+            print(f"❌ ML model prediction failed: {e}")
+            print("🔄 Falling back to rule-based scoring...")
             # Fall back to rule-based scoring
             for ngo_data in ngo_features:
                 ngo_data["ml_score"] = _calculate_rule_based_score(ngo_data)
     else:
+        print("⚠️ No ML model available, using rule-based scoring...")
         # No ML model, use rule-based scoring
         for ngo_data in ngo_features:
             ngo_data["ml_score"] = _calculate_rule_based_score(ngo_data)
     
-    # Sort by ML score (descending)
+    # Sort by ML score (descending) - ML predictions take priority
     ngo_features.sort(key=lambda x: -x["ml_score"])
     
     # Allocate donations based on scores and capacity
@@ -110,22 +117,32 @@ def match_partial_split(donation: Dict, ngos: List[Dict], ml_model) -> Tuple[Lis
         allocated_amount = min(remaining_quantity, ngo_capacity)
         
         if allocated_amount > 0:
-            allocations.append({
+            allocation_entry = {
                 "ngo_id": ngo["id"],
                 "ngo_name": ngo["name"],
                 "allocated_quantity": allocated_amount,
                 "priority_score": round(ngo_data["ml_score"], 3),
                 "distance_km": round(ngo_data["distance"], 2),
                 "reliability": ngo.get("reliability", 0.8),
-                "capacity": ngo_capacity
-            })
+                "capacity": ngo_capacity,
+                "allocation_method": "ML" if ml_predictions_successful else "Rule-Based"
+            }
+            allocations.append(allocation_entry)
             remaining_quantity -= allocated_amount
+    
+    # Log allocation summary
+    if allocations:
+        method = "ML" if ml_predictions_successful else "Rule-Based"
+        print(f"📊 Allocation complete using {method} method: {len(allocations)} NGOs allocated")
     
     return allocations, remaining_quantity
 
 
 def _calculate_rule_based_score(ngo_data: Dict) -> float:
-    """Calculate allocation score using rule-based approach"""
+    """
+    Calculate allocation score using rule-based approach (FALLBACK METHOD)
+    This is used when ML model is unavailable or fails
+    """
     ngo = ngo_data["ngo"]
     distance = ngo_data["distance"]
     
@@ -137,12 +154,12 @@ def _calculate_rule_based_score(ngo_data: Dict) -> float:
     # Recent donations penalty (spread the load)
     recent_penalty = ngo.get("recent_donations", 0) * 5
     
-    # Combine scores
+    # Combine scores with weighted approach
     total_score = (
-        distance_score * 0.4 +  # 40% weight on distance
-        capacity_score * 0.3 +  # 30% weight on capacity
-        reliability_score * 0.3  # 30% weight on reliability
-        - recent_penalty  # Penalty for recent donations
+        distance_score * 0.4 +  # 40% weight on distance (closer is better)
+        capacity_score * 0.3 +  # 30% weight on capacity (higher is better)
+        reliability_score * 0.3  # 30% weight on reliability (higher is better)
+        - recent_penalty  # Penalty for recent donations (spread load)
     )
     
     return max(0, total_score)
