@@ -933,6 +933,157 @@
     }
 }
 
+/* Pickup Mode Toggle Styles */
+.pickup-mode-toggle {
+    display: flex;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 5px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+}
+
+.toggle-option {
+    flex: 1;
+}
+
+.toggle-option input[type="radio"] {
+    display: none;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    background: transparent;
+    color: #6c757d;
+}
+
+.toggle-label:hover {
+    background: rgba(39, 174, 96, 0.1);
+    color: #27ae60;
+}
+
+.toggle-option input[type="radio"]:checked + .toggle-label {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    box-shadow: 0 2px 10px rgba(39, 174, 96, 0.3);
+}
+
+.toggle-icon {
+    font-size: 16px;
+}
+
+/* Pickup Details Container */
+.pickup-details-container {
+    transition: all 0.3s ease;
+}
+
+.pickup-details-container.hidden {
+    display: none;
+}
+
+/* Auto Assignment Styles */
+.auto-assignment-info {
+    background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #d4f4dd;
+}
+
+.info-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.info-icon {
+    font-size: 32px;
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-content h4 {
+    color: #2c3e50;
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.info-content p {
+    color: #5a6c7d;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.auto-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    font-size: 14px;
+    color: #495057;
+}
+
+.feature-icon {
+    font-size: 16px;
+    color: #27ae60;
+}
+
+/* Auto Assignment Form Overrides */
+.auto-assignment-info .form-group {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.auto-assignment-info .form-group label {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Responsive Design for Pickup Mode */
+@media (max-width: 768px) {
+    .pickup-mode-toggle {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .auto-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; }

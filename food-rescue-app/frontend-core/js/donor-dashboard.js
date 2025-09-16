@@ -643,8 +643,58 @@ function openDonationModal() {
         // Setup file upload preview
         setupFileUploadPreview();
         
+        // Setup pickup mode toggle
+        setupPickupModeToggle();
+        
         console.log('📤 Donation modal opened');
     }
+}
+
+function setupPickupModeToggle() {
+    const manualRadio = document.getElementById('pickup-manual');
+    const autoRadio = document.getElementById('pickup-auto');
+    const manualDetails = document.getElementById('manual-pickup-details');
+    const autoDetails = document.getElementById('auto-pickup-details');
+    
+    if (!manualRadio || !autoRadio || !manualDetails || !autoDetails) return;
+    
+    // Toggle function
+    function togglePickupMode() {
+        if (manualRadio.checked) {
+            manualDetails.classList.remove('hidden');
+            autoDetails.classList.add('hidden');
+            
+            // Make manual fields required
+            const manualRequiredFields = manualDetails.querySelectorAll('input[required], textarea[required]');
+            manualRequiredFields.forEach(field => field.required = true);
+            
+            // Remove auto field requirements
+            const autoRequiredFields = autoDetails.querySelectorAll('input[required], textarea[required]');
+            autoRequiredFields.forEach(field => field.required = false);
+            
+            console.log('📍 Manual pickup mode selected');
+        } else if (autoRadio.checked) {
+            manualDetails.classList.add('hidden');
+            autoDetails.classList.remove('hidden');
+            
+            // Remove manual field requirements
+            const manualRequiredFields = manualDetails.querySelectorAll('input[required], textarea[required]');
+            manualRequiredFields.forEach(field => field.required = false);
+            
+            // Make auto phone field required
+            const autoPhoneField = document.getElementById('auto-contact-phone');
+            if (autoPhoneField) autoPhoneField.required = true;
+            
+            console.log('🤖 Auto assignment mode selected');
+        }
+    }
+    
+    // Add event listeners
+    manualRadio.addEventListener('change', togglePickupMode);
+    autoRadio.addEventListener('change', togglePickupMode);
+    
+    // Initialize with manual mode
+    togglePickupMode();
 }
 
 function closeDonationModal() {
@@ -766,6 +816,10 @@ function handleDonationSubmit(event) {
     
     console.log('📤 Processing donation submission...');
     
+    // Determine pickup mode
+    const pickupMode = document.querySelector('input[name="pickup-mode"]:checked').value;
+    console.log('🎯 Pickup mode:', pickupMode);
+    
     // Collect form data
     const formData = {
         id: 'donation_' + Date.now(),
@@ -774,40 +828,70 @@ function handleDonationSubmit(event) {
         quantity: document.getElementById('quantity').value,
         quantityUnit: document.getElementById('quantity-unit').value,
         expiryDate: document.getElementById('expiry-date').value,
-        pickupAddress: document.getElementById('pickup-address').value,
-        pickupDate: document.getElementById('pickup-date').value,
-        pickupTime: document.getElementById('pickup-time').value,
-        pickupWindow: document.getElementById('pickup-window').value,
-        contactPerson: document.getElementById('contact-person').value,
-        contactPhone: document.getElementById('contact-phone').value,
         specialInstructions: document.getElementById('special-instructions').value,
         isUrgent: document.getElementById('urgent-donation').checked,
         isRecurring: document.getElementById('recurring-donation').checked,
         status: 'posted',
         datePosted: new Date().toISOString(),
-        photos: [] // Photo handling will be enhanced later
+        photos: [], // Photo handling will be enhanced later
+        pickupMode: pickupMode
     };
     
-    // Validate required fields
+    // Handle pickup details based on mode
+    if (pickupMode === 'manual') {
+        formData.pickupAddress = document.getElementById('pickup-address').value;
+        formData.pickupDate = document.getElementById('pickup-date').value;
+        formData.pickupTime = document.getElementById('pickup-time').value;
+        formData.pickupWindow = document.getElementById('pickup-window').value;
+        formData.contactPerson = document.getElementById('contact-person').value;
+        formData.contactPhone = document.getElementById('contact-phone').value;
+        
+        // Validate manual pickup fields
+        if (!formData.pickupAddress || !formData.pickupDate || !formData.pickupTime) {
+            alert('Please fill in all required pickup details');
+            return;
+        }
+    } else if (pickupMode === 'auto') {
+        formData.preferredTime = document.getElementById('preferred-time').value;
+        formData.contactPhone = document.getElementById('auto-contact-phone').value;
+        formData.autoAssignment = true;
+        
+        // Set auto-assignment defaults
+        formData.pickupAddress = 'Auto-assigned (TBD)';
+        formData.pickupDate = 'Auto-scheduled';
+        formData.pickupTime = 'Auto-scheduled';
+        formData.pickupWindow = 'Flexible';
+        formData.contactPerson = 'System Coordinator';
+        
+        // Validate auto pickup fields
+        if (!formData.contactPhone) {
+            alert('Please provide a contact phone number for coordination');
+            return;
+        }
+    }
+    
+    // Validate common required fields
     if (!formData.foodType || !formData.description || !formData.quantity || 
-        !formData.expiryDate || !formData.pickupAddress || !formData.pickupDate || !formData.pickupTime) {
+        !formData.expiryDate) {
         alert('Please fill in all required fields');
         return;
     }
     
-    // Validate dates
-    const today = new Date();
-    const expiryDate = new Date(formData.expiryDate);
-    const pickupDate = new Date(formData.pickupDate);
-    
-    if (expiryDate <= today) {
-        alert('Expiry date must be in the future');
-        return;
-    }
-    
-    if (pickupDate < today) {
-        alert('Pickup date must be today or in the future');
-        return;
+    // Validate dates (only for manual mode)
+    if (pickupMode === 'manual') {
+        const today = new Date();
+        const expiryDate = new Date(formData.expiryDate);
+        const pickupDate = new Date(formData.pickupDate);
+        
+        if (expiryDate <= today) {
+            alert('Expiry date must be in the future');
+            return;
+        }
+        
+        if (pickupDate < today) {
+            alert('Pickup date must be today or in the future');
+            return;
+        }
     }
     
     // Save donation
@@ -815,7 +899,12 @@ function handleDonationSubmit(event) {
     
     // Close modal and show success
     closeDonationModal();
-    showSuccessMessage('🎉 Donation posted successfully! NGOs will be notified.');
+    
+    if (pickupMode === 'auto') {
+        showSuccessMessage('🤖 Donation posted for auto-assignment! Our system will find the best NGO match and coordinate pickup details.');
+    } else {
+        showSuccessMessage('🎉 Donation posted successfully! NGOs will be notified.');
+    }
     
     // Refresh dashboard if donor dashboard is available
     if (window.donorDashboard) {

@@ -25,7 +25,8 @@ class NavigationHelper {
         if (this.isLiveServer) {
             console.log('🧭 Live Server detected - applying navigation fixes');
             this.enhanceNavigation();
-            this.addNavigationControls();
+            // Navigation controls disabled - browser navigation working properly
+            // this.addNavigationControls();
         }
     }
 
@@ -71,6 +72,10 @@ class NavigationHelper {
     }
 
     addNavigationControls() {
+        // Navigation controls disabled - browser back/forward buttons are working properly in Live Server
+        // Uncomment the code below if you need the floating navigation controls
+        return;
+        
         // Add floating navigation controls for better UX
         const navControls = document.createElement('div');
         navControls.id = 'live-server-nav-controls';

@@ -349,40 +349,112 @@
                     <div class="form-section">
                         <h3>Pickup Details</h3>
                         
+                        <!-- Pickup Mode Selection -->
                         <div class="form-group">
-                            <label for="pickup-address">Pickup Address *</label>
-                            <textarea id="pickup-address" placeholder="Enter full pickup address..." required rows="3"></textarea>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="pickup-date">Pickup Date *</label>
-                                <input type="date" id="pickup-date" required>
+                            <label class="form-label">Pickup Assignment</label>
+                            <div class="pickup-mode-toggle">
+                                <div class="toggle-option">
+                                    <input type="radio" id="pickup-manual" name="pickup-mode" value="manual" checked>
+                                    <label for="pickup-manual" class="toggle-label">
+                                        <span class="toggle-icon">✋</span>
+                                        Manual Details
+                                    </label>
+                                </div>
+                                <div class="toggle-option">
+                                    <input type="radio" id="pickup-auto" name="pickup-mode" value="auto">
+                                    <label for="pickup-auto" class="toggle-label">
+                                        <span class="toggle-icon">🤖</span>
+                                        Auto Assignment
+                                    </label>
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- Manual Pickup Details -->
+                        <div id="manual-pickup-details" class="pickup-details-container">
                             <div class="form-group">
-                                <label for="pickup-time">Pickup Time *</label>
-                                <input type="time" id="pickup-time" required>
+                                <label for="pickup-address">Pickup Address *</label>
+                                <textarea id="pickup-address" placeholder="Enter full pickup address..." required rows="3"></textarea>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="pickup-date">Pickup Date *</label>
+                                    <input type="date" id="pickup-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="pickup-time">Pickup Time *</label>
+                                    <input type="time" id="pickup-time" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="pickup-window">Pickup Window</label>
+                                <select id="pickup-window">
+                                    <option value="30">30 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="120">2 hours</option>
+                                    <option value="flexible">Flexible</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contact-person">Contact Person</label>
+                                <input type="text" id="contact-person" placeholder="Name of person to contact">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="contact-phone">Contact Phone</label>
+                                <input type="tel" id="contact-phone" placeholder="Phone number for pickup coordination">
                             </div>
                         </div>
 
-                        <div class="form-group">
-                            <label for="pickup-window">Pickup Window</label>
-                            <select id="pickup-window">
-                                <option value="30">30 minutes</option>
-                                <option value="60" selected>1 hour</option>
-                                <option value="120">2 hours</option>
-                                <option value="flexible">Flexible</option>
-                            </select>
-                        </div>
+                        <!-- Auto Assignment Details -->
+                        <div id="auto-pickup-details" class="pickup-details-container hidden">
+                            <div class="auto-assignment-info">
+                                <div class="info-card">
+                                    <div class="info-icon">🤖</div>
+                                    <div class="info-content">
+                                        <h4>Automatic Assignment</h4>
+                                        <p>Our system will automatically match your donation with the nearest NGO and coordinate pickup details.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="auto-features">
+                                    <div class="feature-item">
+                                        <span class="feature-icon">📍</span>
+                                        <span>Location-based NGO matching</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">⏰</span>
+                                        <span>Optimal pickup time scheduling</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">📱</span>
+                                        <span>SMS/Email coordination updates</span>
+                                    </div>
+                                    <div class="feature-item">
+                                        <span class="feature-icon">🚀</span>
+                                        <span>Faster processing and matching</span>
+                                    </div>
+                                </div>
 
-                        <div class="form-group">
-                            <label for="contact-person">Contact Person</label>
-                            <input type="text" id="contact-person" placeholder="Name of person to contact">
-                        </div>
+                                <div class="form-group">
+                                    <label for="preferred-time">Preferred Pickup Time (Optional)</label>
+                                    <select id="preferred-time">
+                                        <option value="">No preference</option>
+                                        <option value="morning">Morning (8AM - 12PM)</option>
+                                        <option value="afternoon">Afternoon (12PM - 5PM)</option>
+                                        <option value="evening">Evening (5PM - 8PM)</option>
+                                        <option value="flexible">Flexible</option>
+                                    </select>
+                                </div>
 
-                        <div class="form-group">
-                            <label for="contact-phone">Contact Phone</label>
-                            <input type="tel" id="contact-phone" placeholder="Phone number for pickup coordination">
+                                <div class="form-group">
+                                    <label for="auto-contact-phone">Contact Phone *</label>
+                                    <input type="tel" id="auto-contact-phone" placeholder="Phone number for coordination" required>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
