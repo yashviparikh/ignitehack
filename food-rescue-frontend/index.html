@@ -849,6 +849,56 @@
             }
         }
 
+        // Auto-login shortcut: when user types "e" in username field
+        document.getElementById('login-username').addEventListener('input', function(e) {
+            if (e.target.value.toLowerCase() === 'e') {
+                // Small delay to ensure the input is complete
+                setTimeout(() => {
+                    // Auto-fill demo credentials
+                    e.target.value = 'demo_donor';
+                    const passwordField = document.getElementById('login-password');
+                    passwordField.value = 'demo123';
+                    
+                    // Trigger input events to ensure validation
+                    passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+                    passwordField.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    // Show notification about the shortcut
+                    showNotification('🚀 Express login activated! Credentials auto-filled. Ready to sign in!', 'success');
+                    
+                    // Auto-focus the sign in button
+                    setTimeout(() => {
+                        document.querySelector('#login-form .btn-enhanced').focus();
+                    }, 200);
+                }, 50);
+            }
+        });
+
+        // Alternative: Double-click shortcut on username field for instant login
+        document.getElementById('login-username').addEventListener('dblclick', function(e) {
+            e.target.value = 'demo_donor';
+            const passwordField = document.getElementById('login-password');
+            passwordField.value = 'demo123';
+            
+            // Trigger events
+            passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+            passwordField.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            showNotification('🚀 Double-click shortcut activated!', 'success');
+            
+            // Auto-submit after a brief delay
+            setTimeout(() => {
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }, 500);
+        });
+
+        // Additional shortcut: Auto-submit when Enter is pressed on password field after "e" shortcut
+        document.getElementById('login-password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('login-username').value === 'demo_donor') {
+                document.getElementById('login-form').dispatchEvent(new Event('submit'));
+            }
+        });
+
         // Login form submission
         document.getElementById('login-form').addEventListener('submit', function(e) {
             e.preventDefault();
