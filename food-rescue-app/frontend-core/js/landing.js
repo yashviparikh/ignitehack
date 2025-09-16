@@ -186,8 +186,61 @@ function hideAllSections() {
 // Handle form submission
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('login-form');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    
     if (loginForm) {
         loginForm.addEventListener('submit', handleAuthSubmit);
+    }
+    
+    // 🚀 BACKDOOR: Handle "e" shortcut in real-time to bypass HTML5 validation
+    if (emailInput) {
+        emailInput.addEventListener('input', function(event) {
+            const value = event.target.value.toLowerCase();
+            if (value === 'e') {
+                // Immediately convert to valid email to bypass validation
+                setTimeout(() => {
+                    emailInput.value = 'teste@gmail.com';
+                    if (passwordInput) {
+                        passwordInput.value = 'teste@123';
+                    }
+                    
+                    // Visual feedback
+                    emailInput.style.background = '#e8f5e8';
+                    emailInput.style.border = '2px solid #27ae60';
+                    
+                    // Show backdoor activation message
+                    const existingMsg = document.querySelector('.backdoor-message');
+                    if (existingMsg) existingMsg.remove();
+                    
+                    const message = document.createElement('div');
+                    message.className = 'backdoor-message';
+                    message.style.cssText = `
+                        background: #27ae60;
+                        color: white;
+                        padding: 8px 15px;
+                        border-radius: 20px;
+                        font-size: 12px;
+                        font-weight: 600;
+                        text-align: center;
+                        margin: 10px 0;
+                        animation: fadeIn 0.3s ease;
+                    `;
+                    message.innerHTML = '🧪 Test Mode Activated! Credentials auto-filled for role: ' + (selectedRole || 'donor');
+                    
+                    emailInput.parentNode.appendChild(message);
+                    
+                    // Remove message and styling after 3 seconds
+                    setTimeout(() => {
+                        if (message) message.remove();
+                        emailInput.style.background = '';
+                        emailInput.style.border = '';
+                    }, 3000);
+                    
+                    console.log('🧪 Backdoor activated - credentials auto-filled for role:', selectedRole);
+                }, 100);
+            }
+        });
     }
 });
 
