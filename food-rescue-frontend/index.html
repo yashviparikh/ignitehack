@@ -88,13 +88,33 @@
                     </div>
                     
                     <div class="form-group">
+                        <label>Food Type</label>
+                        <select id="food-type">
+                            <option value="">Select food type (optional)...</option>
+                            <option value="Prepared Meals">Prepared Meals</option>
+                            <option value="Fresh Produce">Fresh Produce</option>
+                            <option value="Bakery Items">Bakery Items</option>
+                            <option value="Dairy Products">Dairy Products</option>
+                            <option value="Packaged Foods">Packaged Foods</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
                         <label>Food Description *</label>
-                        <textarea id="food-description" rows="3" required placeholder="Describe the food items..."></textarea>
+                        <textarea id="food-description" rows="3" required placeholder="Describe the food items in detail..."></textarea>
                     </div>
                     
                     <div class="form-group">
                         <label>Quantity (servings) *</label>
                         <input type="number" id="quantity" required min="1">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Expiry Hours</label>
+                        <input type="number" id="expiry-hours" min="1" max="72" placeholder="Hours until food expires (optional)">
+                        <small style="color: #666; font-size: 0.8em;">How many hours from now will this food expire?</small>
                     </div>
                     
                     <div class="form-group">
@@ -466,8 +486,10 @@
             
             const formData = {
                 restaurant_name: document.getElementById('restaurant-name').value,
+                food_type: document.getElementById('food-type').value || null,
                 food_description: document.getElementById('food-description').value,
                 quantity: parseInt(document.getElementById('quantity').value),
+                expiry_hours: document.getElementById('expiry-hours').value ? parseInt(document.getElementById('expiry-hours').value) : null,
                 latitude: currentLocation?.latitude || null,
                 longitude: currentLocation?.longitude || null,
                 pickup_address: currentLocation?.manual_address || document.getElementById('restaurant-name').value || 'Address not provided'
@@ -496,10 +518,12 @@
                     currentLocation = null;
                     loadMyDonations();
                 } else {
-                    showNotification('Error posting donation', 'error');
+                    const errorText = await response.text();
+                    console.error('Server error:', errorText);
+                    showNotification(`Error posting donation: ${response.status}`, 'error');
                 }
             } catch (error) {
-                showNotification('Network error', 'error');
+                showNotification(`Network error: ${error.message}`, 'error');
                 console.error('Error:', error);
             }
         });
@@ -581,8 +605,10 @@
                 card.className = 'donation-card';
                 card.innerHTML = `
                     <h4>${donation.restaurant_name}</h4>
-                    <p><strong>Food:</strong> ${donation.food_description}</p>
+                    <p><strong>Food Type:</strong> ${donation.food_type || 'Not specified'}</p>
+                    <p><strong>Description:</strong> ${donation.food_description}</p>
                     <p><strong>Quantity:</strong> ${donation.quantity} servings</p>
+                    <p><strong>Expires in:</strong> ${donation.expiry_hours || 'Not specified'} hours</p>
                     <p><strong>Status:</strong> <span class="status ${donation.status}">${donation.status}</span></p>
                     <p><strong>Posted:</strong> ${new Date(donation.created_at).toLocaleString()}</p>
                     ${donation.photo_url ? `<img src="${donation.photo_url.startsWith('/uploads/') ? 'http://127.0.0.1:8000' + donation.photo_url : API_BASE + donation.photo_url}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 5px; margin: 10px 0;">` : ''}

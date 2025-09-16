@@ -47,13 +47,15 @@ def init_db():
     conn = sqlite3.connect('food_rescue.db')
     cursor = conn.cursor()
     
-    # Create tables
+    # Create tables with new schema
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS donations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             restaurant_name TEXT NOT NULL,
+            food_type TEXT,
             food_description TEXT NOT NULL,
             quantity INTEGER NOT NULL,
+            expiry_hours INTEGER,
             photo_url TEXT,
             latitude REAL,
             longitude REAL,
@@ -62,6 +64,17 @@ def init_db():
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+    
+    # Add new columns to existing table if they don't exist
+    try:
+        cursor.execute('ALTER TABLE donations ADD COLUMN food_type TEXT')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute('ALTER TABLE donations ADD COLUMN expiry_hours INTEGER')
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ngos (
@@ -103,9 +116,11 @@ def startup_event():
 
 # Pydantic models
 class DonationCreate(BaseModel):
-    restaurant_name: str
-    food_description: str
-    quantity: int
+    restaurant_name: str  # This will serve as donor name
+    food_type: Optional[str] = None        # Optional for backward compatibility
+    food_description: str # Detailed description  
+    quantity: int         # Quantity/servings
+    expiry_hours: Optional[int] = None     # Optional for backward compatibility
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     pickup_address: Optional[str] = None
@@ -129,20 +144,30 @@ def health_check():
 
 @app.post("/api/donations/")
 def create_donation(donation: DonationCreate):
-    conn = sqlite3.connect('food_rescue.db')
-    cursor = conn.cursor()
+    try:
+        conn = sqlite3.connect('food_rescue.db')
+        cursor = conn.cursor()
+        
+        # Handle None values for new fields
+        food_type = donation.food_type or "Not specified"
+        expiry_hours = donation.expiry_hours or 24  # Default to 24 hours
+        
+        cursor.execute('''
+            INSERT INTO donations (restaurant_name, food_type, food_description, quantity, expiry_hours, latitude, longitude, pickup_address)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (donation.restaurant_name, food_type, donation.food_description, donation.quantity, 
+              expiry_hours, donation.latitude, donation.longitude, donation.pickup_address))
+        
+        donation_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        
+        return {"id": donation_id, "message": "Donation created successfully"}
     
-    cursor.execute('''
-        INSERT INTO donations (restaurant_name, food_description, quantity, latitude, longitude, pickup_address)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', (donation.restaurant_name, donation.food_description, donation.quantity, 
-          donation.latitude, donation.longitude, donation.pickup_address))
-    
-    donation_id = cursor.lastrowid
-    conn.commit()
-    conn.close()
-    
-    return {"id": donation_id, "message": "Donation created successfully"}
+    except sqlite3.Error as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
 
 @app.get("/api/donations/")
 def get_donations(status: Optional[str] = None):
