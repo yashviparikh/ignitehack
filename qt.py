@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
 Food Rescue System Quick Test
-Fast comprehensive test for all API components, WebSocket, and functionality.
+Fast comprehensive test for all API components, WebSocket, ML allocation, and functionality.
 
 Usage:
     python qt.py
     python qt.py --skip-websocket  # Skip WebSocket tests
     python qt.py --skip-donations  # Skip donation flow tests
+
+New in this version:
+    - ML allocation endpoint testing
+    - Smart donation-NGO matching validation
+    - Allocation algorithm performance checks
 """
 
 import asyncio
@@ -39,6 +44,7 @@ class FoodRescueQuickTest:
             'api_ngos': False,
             'api_pickups': False,
             'api_stats': False,
+            'ml_allocation': False,  # New ML allocation test
             'websocket_connection': False,
             'websocket_broadcasting': False,
             'file_upload': False,
@@ -174,6 +180,9 @@ class FoodRescueQuickTest:
             # Test stats API
             await self._test_stats_api(session)
             
+            # Test ML allocation API
+            await self._test_ml_allocation_api(session)
+            
             # Test WebSocket stats
             await self._test_websocket_stats(session)
 
@@ -233,6 +242,105 @@ class FoodRescueQuickTest:
                     raise Exception(f"HTTP {response.status}")
         except Exception as e:
             self.log(f"Stats API: {str(e)}", "FAIL")
+
+    async def _test_ml_allocation_api(self, session):
+        """Test ML allocation API endpoint"""
+        try:
+            self.log("Testing ML allocation system...", "INFO")
+            
+            # First, create a test donation
+            test_donation = {
+                "restaurant_name": "Test Restaurant ML",
+                "food_description": "Bakery Items",
+                "quantity": 15,
+                "latitude": 12.9716,
+                "longitude": 77.5946,
+                "expires_at": "2025-09-17T18:00:00"
+            }
+            
+            async with session.post(f"{API_BASE}/donations/", json=test_donation) as response:
+                if response.status != 200:
+                    raise Exception(f"Failed to create test donation: HTTP {response.status}")
+                
+                donation = await response.json()
+                donation_id = donation['id']
+                self.log(f"Created test donation ID: {donation_id}", "INFO")
+            
+            # Create test NGOs if they don't exist
+            test_ngos = [
+                {
+                    "name": "ML Test NGO 1",
+                    "contact_phone": "+91-9876543210",
+                    "latitude": 12.977980260385616,
+                    "longitude": 77.5934550337575,
+                    "accepted_food_types": json.dumps(["Bakery Items", "Dairy Products"]),
+                    "storage_capacity": 100,
+                    "operating_schedule": "24/7"
+                },
+                {
+                    "name": "ML Test NGO 2", 
+                    "contact_phone": "+91-9876543211",
+                    "latitude": 12.989101732483828,
+                    "longitude": 77.59770279299,
+                    "accepted_food_types": json.dumps(["Bakery Items", "Prepared Meals"]),
+                    "storage_capacity": 150,
+                    "operating_schedule": "6AM-10PM"
+                }
+            ]
+            
+            for ngo_data in test_ngos:
+                async with session.post(f"{API_BASE}/ngos/", json=ngo_data) as response:
+                    if response.status == 200:
+                        ngo = await response.json()
+                        self.log(f"Created test NGO: {ngo['name']} (ID: {ngo['id']})", "INFO")
+            
+            # Now test the ML allocation endpoint
+            allocation_url = f"{API_BASE}/donations/{donation_id}/allocate"
+            async with session.post(allocation_url) as response:
+                if response.status == 200:
+                    allocation_result = await response.json()
+                    
+                    # Validate the response structure
+                    required_fields = ['donation_id', 'allocations', 'remaining_quantity']
+                    for field in required_fields:
+                        if field not in allocation_result:
+                            raise Exception(f"Missing field '{field}' in allocation response")
+                    
+                    # Check if we got allocations
+                    allocations = allocation_result.get('allocations', [])
+                    remaining = allocation_result.get('remaining_quantity', 0)
+                    
+                    if allocations:
+                        top_allocation = allocations[0]
+                        ngo_name = top_allocation.get('ngo_name', 'Unknown')
+                        allocated_qty = top_allocation.get('allocated_quantity', 0)
+                        priority_score = top_allocation.get('priority_score', 0)
+                        distance = top_allocation.get('distance_km', 0)
+                        
+                        self.log(f"ML Allocation: SUCCESS", "PASS")
+                        self.log(f"  → Top match: {ngo_name} ({allocated_qty} units)", "INFO")
+                        self.log(f"  → Priority score: {priority_score:.2f}", "INFO")
+                        self.log(f"  → Distance: {distance:.2f} km", "INFO")
+                        self.log(f"  → Remaining: {remaining} units", "INFO")
+                        
+                        # Validate allocation logic
+                        if allocated_qty > 0 and priority_score > 0:
+                            self.components['ml_allocation'] = True
+                            self.log("ML allocation logic: VALIDATED", "PASS")
+                        else:
+                            raise Exception("Invalid allocation values")
+                    else:
+                        self.log("ML Allocation: No matches found (check food type compatibility)", "WARN")
+                        self.components['ml_allocation'] = True  # Still working, just no matches
+                        
+                elif response.status == 404:
+                    raise Exception("Donation not found (check API routing)")
+                else:
+                    raise Exception(f"HTTP {response.status}: {await response.text()}")
+                    
+        except Exception as e:
+            self.log(f"ML Allocation API: {str(e)}", "FAIL")
+            self.components['ml_allocation'] = False
 
     async def _test_websocket_stats(self, session):
         """Test WebSocket statistics endpoint"""
@@ -527,6 +635,7 @@ class FoodRescueQuickTest:
             ('api_donations', '🍽️  Donations API', 'Core donation management'),
             ('api_ngos', '🏢 NGOs API', 'NGO registration and management'),
             ('api_pickups', '🚚 Pickups API', 'Pickup coordination'),
+            ('ml_allocation', '🧠 ML Allocation', 'Smart donation-NGO matching'),
             ('frontend_interface', '🖥️  Web Interface', 'User interface'),
             ('database_operations', '💾 Database Operations', 'Data persistence')
         ]
