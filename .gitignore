@@ -1,0 +1,358 @@
+# ============================================================================
+# Hackathon Backend Templates - .gitignore
+# ============================================================================
+
+# ======================== DEVELOPMENT ARTIFACTS ========================
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# ======================== LANGUAGE SPECIFIC ========================
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+coverage/
+.nyc_output/
+.node_repl_history
+*.tgz
+.npm
+.yarn-integrity
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Go
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+go.work
+vendor/
+
+# Java
+*.class
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+target/
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ======================== ENVIRONMENT & SECRETS ========================
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.envrc
+
+# Secret files
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+.secrets/
+credentials/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# ======================== CLOUD & INFRASTRUCTURE ========================
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+
+# Docker
+.dockerignore
+
+# Kubernetes
+*.kubeconfig
+
+# AWS
+.aws/
+
+# Azure
+.azure/
+
+# GCP
+gcp-key.json
+service-account*.json
+
+# ======================== IDEs & EDITORS ========================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ======================== OPERATING SYSTEMS ========================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.nfs*
+
+# ======================== TESTING & COVERAGE ========================
+# Test coverage
+coverage/
+*.lcov
+.nyc_output/
+.coverage
+htmlcov/
+.pytest_cache/
+.cache
+
+# Jest
+jest_results/
+
+# ======================== DOCUMENTATION ========================
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Sphinx documentation
+docs/_build/
+.readthedocs.yml
+
+# ======================== DEVELOPMENT TOOLS ========================
+# ESLint
+.eslintcache
+
+# Prettier
+.prettierignore
+
+# Webpack
+.webpack/
+
+# Parcel
+.cache/
+.parcel-cache/
+
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# ======================== PACKAGE MANAGERS ========================
+# npm
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Composer (PHP)
+/vendor/
+
+# ======================== HACKATHON SPECIFIC ========================
+# Template development artifacts
+templates/*/node_modules/
+templates/*/.env
+templates/*/dist/
+templates/*/build/
+templates/*/coverage/
+
+# Shared component builds
+shared/*/dist/
+shared/*/build/
+
+# Script logs
+scripts/*.log
+
+# Demo data (except samples)
+data/
+!data/samples/
+
+# Generated documentation
+docs/generated/
+
+# Deployment artifacts
+deploy/
+*.deployed
+
+# Load testing results
+load-test-results/
+
+# ======================== SECURITY & COMPLIANCE ========================
+# Certificate files
+*.crt
+*.cert
+*.ca-bundle
+*.p7b
+*.p7s
+*.pfx
+
+# SSH keys
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+*.pub
+
+# GPG keys
+*.gpg
+*.asc
+
+# ======================== MONITORING & OBSERVABILITY ========================
+# Prometheus metrics
+prometheus_data/
+
+# Grafana
+grafana_data/
+
+# Application metrics
+metrics/
+*.metrics
+
+# ======================== BACKUP & ARCHIVE ========================
+# Backup files
+*.backup
+*.bak
+*.old
+backup/
+backups/
+
+# Archive files
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ======================== CUSTOM IGNORES ========================
+# Add project-specific ignores below this line
+# (This section can be modified per template needs)
+
+# VS Code history extension
+.history/
+
+# Copilot files (keep instructions, ignore generated)
+!copilot/hackathon-backend-template-instructions.md
+
+# Test reports from qt.py
+test_report.json
+test-report.html
