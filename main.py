@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
 from datetime import datetime
@@ -8,6 +9,9 @@ import sqlite3
 import shutil
 import os
 import uuid
+import webbrowser
+import threading
+import time
 
 # Create FastAPI app
 app = FastAPI(title="Food Rescue Matchmaker API", version="1.0.0")
