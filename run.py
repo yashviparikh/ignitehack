@@ -271,6 +271,9 @@ def init_db():
     conn.close()
 
 # Initialize database on startup
+# Global variable to store the port for browser opening
+SERVER_PORT = 8000
+
 @app.on_event("startup")
 def startup_event():
     init_db()
@@ -278,7 +281,7 @@ def startup_event():
     def open_browser():
         time.sleep(2)  # Wait for server to start
         # Always open localhost (geolocation works there)
-        webbrowser.open("http://localhost:8000")
+        webbrowser.open(f"http://localhost:{SERVER_PORT}")
     
     # Run in a separate thread so it doesn't block startup
     threading.Thread(target=open_browser, daemon=True).start()
@@ -876,9 +879,58 @@ if __name__ == "__main__":
             return local_ip
         except:
             return "Unable to determine"
+
+    def find_free_port(start_port=8000, max_attempts=20):
+        """Find a free port starting from start_port"""
+        for port in range(start_port, start_port + max_attempts):
+            try:
+                # Try to bind to the port to check if it's free
+                test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                test_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                test_socket.bind(('0.0.0.0', port))
+                test_socket.close()
+                print(f"✅ Port {port} is available")
+                return port
+            except OSError as e:
+                print(f"❌ Port {port} is in use: {e}")
+                continue
+        
+        # If no port found in range, return a random high port
+        import random
+        fallback_port = random.randint(9000, 9999)
+        print(f"⚠️ Using fallback port: {fallback_port}")
+        return fallback_port
+
+    def cleanup_port_connections(port):
+        """Try to cleanup any lingering connections on the port"""
+        try:
+            # Kill any Python processes that might be holding the port
+            import subprocess
+            result = subprocess.run(f'netstat -ano | findstr :{port}', 
+                                  shell=True, capture_output=True, text=True)
+            if result.stdout:
+                print(f"⚠️ Found existing connections on port {port}:")
+                print(result.stdout)
+                print("🔄 Attempting automatic cleanup...")
+                
+                # Wait a moment for TIME_WAIT connections to clear
+                time.sleep(2)
+        except Exception as e:
+            print(f"⚠️ Could not cleanup port connections: {e}")
+    
     
     local_ip = get_local_ip()
-    port = 8000
+    
+    # First try to cleanup any lingering connections on port 8000
+    print("\n🧹 Cleaning up any existing connections...")
+    cleanup_port_connections(8000)
+    
+    # Find an available port starting from 8000
+    print("\n🔍 Finding available port...")
+    port = find_free_port(8000, 20)
+    
+    # Update global variable for browser opening
+    SERVER_PORT = port
     
     print("\n" + "="*70)
     print("🍽️  FOOD RESCUE MATCHMAKER API SERVER")
